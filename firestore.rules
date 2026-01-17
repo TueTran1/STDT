@@ -1,0 +1,241 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (getUserRole() == 'admin' || !get(/databases/$(database)/documents/users/$(request.auth.uid)).data);
+    }
+    
+    function isEditorOrAdmin() {
+      return isAuthenticated() && (getUserRole() in ['editor', 'admin']);
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Admins can read all profiles
+      allow read: if isAdmin();
+      
+      // Users can update their own profile (except role and status)
+      allow update: if isOwner(userId) && 
+        request.resource.data.keys().hasAll(['displayName', 'photoURL', 'profile', 'preferences']) &&
+        !request.resource.data.keys().hasAny(['role', 'isActive', 'uid']);
+      
+      // Admins can update any user profile
+      allow update: if isAdmin();
+      
+      // Only admins can create users
+      allow create: if isAdmin();
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // News Collection
+    match /news/{newsId} {
+      // Public read for published articles
+      allow read: if resource.data.status == 'published';
+      
+      // Authenticated users can read their own drafts
+      allow read: if isAuthenticated() && resource.data.createdBy == request.auth.uid;
+      
+      // Editors and admins can read all news
+      allow read: if isEditorOrAdmin();
+      
+      // Editors and admins can create news
+      allow create: if isEditorOrAdmin() && 
+        request.resource.data.title is string &&
+        request.resource.data.slug is string &&
+        request.resource.data.excerpt is string &&
+        request.resource.data.content is string &&
+        request.resource.data.category is string &&
+        request.resource.data.status is string &&
+        request.resource.data.author is map &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.createdBy is string &&
+        request.resource.data.updatedBy is string;
+
+      // Editors can update their own news (unless published)
+      allow update: if isAuthenticated() && 
+        resource.data.createdBy == request.auth.uid &&
+        resource.data.status != 'published' &&
+        getUserRole() == 'editor';
+
+      // Admins can update any news
+      allow update: if isAdmin();
+
+      // Admins can delete any news
+      allow delete: if isAdmin();
+    }
+
+    // Traditions Collection
+    match /traditions/{traditionId} {
+      // Public read for published traditions
+      allow read: if resource.data.status == 'published';
+      
+      // Authenticated users can read their own drafts
+      allow read: if isAuthenticated() && resource.data.contributor.uid == request.auth.uid;
+      
+      // Editors and admins can read all traditions
+      allow read: if isEditorOrAdmin();
+      
+      // Editors and admins can create traditions
+      allow create: if isEditorOrAdmin() && 
+        request.resource.data.keys().hasAll([
+          'title', 'slug', 'description', 'content', 'category', 'origin',
+          'timePeriod', 'media', 'significance', 'status', 'contributor',
+          'verification', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'
+        ]);
+      
+      // Contributors can edit their own traditions (unless verified)
+      allow update: if isAuthenticated() && 
+        resource.data.contributor.uid == request.auth.uid &&
+        !resource.data.verification.isVerified &&
+        isEditorOrAdmin();
+      
+      // Admins can update any traditions
+      allow update: if isAdmin();
+      
+      // Admins can delete traditions
+      allow delete: if isAdmin();
+    }
+
+    // Knowledge Collection
+    match /knowledge/{knowledgeId} {
+      // Public read for published articles
+      allow read: if resource.data.status == 'published';
+      
+      // Authenticated users can read their own drafts
+      allow read: if isAuthenticated() && resource.data.author.uid == request.auth.uid;
+      
+      // Editors and admins can read all knowledge
+      allow read: if isEditorOrAdmin();
+      
+      // Editors and admins can create knowledge
+      allow create: if isEditorOrAdmin() && 
+        request.resource.data.title is string &&
+        request.resource.data.slug is string &&
+        request.resource.data.type is string &&
+        request.resource.data.content is string &&
+        request.resource.data.summary is string &&
+        request.resource.data.difficulty is string &&
+        request.resource.data.category is string &&
+        request.resource.data.status is string &&
+        request.resource.data.author is map &&
+        request.resource.data.review is map &&
+        request.resource.data.engagement is map &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.createdBy is string &&
+        request.resource.data.updatedBy is string;
+
+      // Authors can edit their own knowledge (unless reviewed)
+      allow update: if isAuthenticated() && 
+        resource.data.author.uid == request.auth.uid &&
+        !resource.data.review.isReviewed &&
+        getUserRole() == 'editor';
+
+      // Admins can update any knowledge
+      allow update: if isAdmin();
+
+      // Admins can delete any knowledge
+      allow delete: if isAdmin();
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
+      
+      // Admins can read all notifications
+      allow read: if isAdmin();
+      
+      // Admins can create notifications
+      allow create: if isAdmin() && 
+        request.resource.data.keys().hasAll([
+          'recipientUid', 'type', 'title', 'message', 'priority',
+          'channels', 'status', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'
+        ]);
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isAuthenticated() && 
+        resource.data.recipientUid == request.auth.uid &&
+        request.resource.data.keys().hasAll(['readAt', 'status']) &&
+        request.resource.data.status == 'read';
+      
+      // Admins can update any notification
+      allow update: if isAdmin();
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
+      
+      // Admins can delete any notification
+      allow delete: if isAdmin();
+    }
+
+    // User-specific notifications subcollection
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Comments subcollection
+    match /{collection}/{docId}/comments/{commentId} {
+      // Public read for active comments on published content
+      allow read: if resource.data.status == 'active' && 
+        get(/databases/$(database)/documents/$(collection)/$(docId)).data.status == 'published';
+      
+      // Authenticated users can create comments
+      allow create: if isAuthenticated() && 
+        request.resource.data.keys().hasAll(['uid', 'content', 'createdAt', 'status', 'likes']);
+      
+      // Users can update their own comments
+      allow update: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      
+      // Users can delete their own comments
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      
+      // Admins can manage any comment
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Likes subcollection
+    match /{collection}/{docId}/likes/{likeId} {
+      // Users can read likes count
+      allow read: if isAuthenticated();
+      
+      // Users can create their own like
+      allow create: if isAuthenticated() && 
+        request.resource.data.uid == request.auth.uid;
+      
+      // Users can delete their own like
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    // Bookmarks subcollection
+    match /users/{userId}/bookmarks/{bookmarkId} {
+      allow read, create, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read: if true; // Temporary: Allow public read for testing
+      allow write: if false;
+    }
+  }
+}
