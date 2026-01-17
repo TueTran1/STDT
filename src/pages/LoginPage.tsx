@@ -27,13 +27,10 @@ export const LoginPage: React.FC = () => {
     setError('')
 
     try {
-      const response = await login(username, password)
+      await login(username, password)
       
-      // Handle redirect using the response data
-      const redirectPath = sessionStorage.getItem('redirectPath') || 
-        (response.user.role === 'admin' ? '/admin' : '/profile')
-      sessionStorage.removeItem('redirectPath')
-      navigate(redirectPath)
+      // Redirect will be handled by the useEffect that watches for user changes
+      // The onAuthStateChanged listener will update the user state
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {

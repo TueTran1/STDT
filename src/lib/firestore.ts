@@ -1,5 +1,4 @@
 import { db } from './firebase'
-import { developmentAuthBridge } from '../services/developmentAuthBridge'
 import type {
   Firestore,
   DocumentData,
@@ -14,33 +13,8 @@ export type { Firestore, DocumentData, Query, DocumentReference, CollectionRefer
 export const firestoreUtils = {
   addDocument: (collectionPath: string, data: DocumentData) => {
     return import('firebase/firestore').then(({ collection, addDoc }) => {
-      // Initialize development auth bridge
-      const devUser = developmentAuthBridge.initialize()
-      
-      if (!devUser) {
-        throw new Error('User not authenticated - please log in first')
-      }
-
-      // Add development auth context for Firestore rules
-      const documentWithAuth = {
-        ...data,
-        _devAuth: {
-          uid: devUser.uid,
-          role: devUser.role,
-          email: devUser.email,
-          displayName: devUser.displayName,
-          timestamp: new Date().toISOString()
-        }
-      }
-      
-      console.log('Adding document with development auth:', {
-        collection: collectionPath,
-        user: devUser,
-        documentId: 'pending'
-      })
-      
       const collectionRef = collection(db, collectionPath)
-      return addDoc(collectionRef, documentWithAuth)
+      return addDoc(collectionRef, data)
     })
   },
 
