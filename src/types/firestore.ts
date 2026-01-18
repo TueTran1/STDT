@@ -19,7 +19,7 @@ export interface BaseArticle {
   excerpt?: string
   tags: string[]
   featured: boolean
-  status: 'saved' | 'published' | 'draft' | 'archived' // Extended for backward compatibility
+  status: 'saved' | 'published' // Extended for backward compatibility
   createdAt: Date
   createdBy: string
   updatedAt: Date
@@ -53,7 +53,6 @@ export interface NewsArticle extends BaseArticle {
 export interface KnowledgeArticle extends BaseArticle {
   // Knowledge-specific fields
   category: 'quan-su' | 'chinh-tri' | 'hau-can' | 'ky-thuat'
-  difficulty: 'beginner' | 'intermediate' | 'advanced'
   summary: string // Required for knowledge articles
   estimatedTime: number // Minutes to read/complete
   engagement: {
@@ -187,7 +186,6 @@ export interface KnowledgeDocument extends BaseDocument {
   type: 'article' | 'tutorial' | 'guide' | 'fact' | 'story'
   content: string
   summary: string // Brief overview
-  difficulty: 'beginner' | 'intermediate' | 'advanced'
   category: string // Main category (e.g., "history", "culture", "arts")
   subcategory: string // Specific subcategory
   tags: string[]

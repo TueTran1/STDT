@@ -22,7 +22,7 @@ export interface ArticleQueryOptions {
     operator: '==' | '!=' | '>' | '>=' | '<' | '<=' | 'array-contains' | 'in' | 'array-contains-any'
     value: any
   }[]
-  status?: 'saved' | 'published' | 'draft' | 'archived'
+  status?: 'saved' | 'published'
   category?: string
   featured?: boolean
 }
@@ -271,10 +271,6 @@ export const validateArticle = (
     
     if (!knowledgeArticle.category || !['quan-su', 'chinh-tri', 'hau-can', 'ky-thuat'].includes(knowledgeArticle.category)) {
       errors.push('Danh mục kiến thức không hợp lệ')
-    }
-    
-    if (!knowledgeArticle.difficulty || !['beginner', 'intermediate', 'advanced'].includes(knowledgeArticle.difficulty)) {
-      errors.push('Cấp độ khó không hợp lệ')
     }
   }
   

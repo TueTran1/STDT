@@ -26,8 +26,7 @@ export const PasswordResetDialog: React.FC<PasswordResetDialogProps> = ({
       await sendPasswordResetEmail(auth, email)
       setMessage('Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.')
     } catch (err: any) {
-      console.error('Password reset error:', err)
-      if (err.code === 'auth/user-not-found') {
+            if (err.code === 'auth/user-not-found') {
         setError('Không tìm thấy người dùng với email này.')
       } else if (err.code === 'auth/invalid-email') {
         setError('Email không hợp lệ.')

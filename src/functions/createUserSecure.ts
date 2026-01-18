@@ -31,8 +31,7 @@ interface CreateUserRequest {
 export const createUserSecure = functions.https.onCall(async (data: CreateUserRequest, context) => {
   // Validate input
   if (!data.email || !data.displayName || !data.role) {
-    console.error('Missing required fields', { data })
-    throw new functions.https.HttpsError('invalid-argument', 'Missing required fields')
+        throw new functions.https.HttpsError('invalid-argument', 'Missing required fields')
   }
 
   // Validate email format
@@ -105,8 +104,7 @@ export const createUserSecure = functions.https.onCall(async (data: CreateUserRe
     }
 
   } catch (error: any) {
-    console.error('User creation failed', { error: error.message, email: data.email })
-
+    
     if (error.code === 'auth/email-already-exists') {
       throw new functions.https.HttpsError('already-exists', 'Email already exists')
     } else if (error.code === 'auth/invalid-email') {
@@ -145,8 +143,7 @@ export const resetUserPassword = functions.https.onCall(async (data: { uid: stri
     }
 
   } catch (error: any) {
-    console.error('Password reset failed', { error: error.message, uid })
-    
+        
     throw new functions.https.HttpsError('internal', 'Failed to reset password')
   }
 })

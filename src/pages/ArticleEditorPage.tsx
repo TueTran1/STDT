@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useContentPermission } from '../hooks/useContentPermissions'
@@ -8,6 +8,7 @@ import {
   updateArticle,
   type ContentType 
 } from '../services/contentService'
+import { useAuthDebug, logAuthDebug, checkFirestoreUserDocument } from '../utils/debugAuth'
 import { MilitaryPageLayout } from '../components/layout'
 import { LoadingState, ErrorState } from '../components/ui'
 import { ArrowLeft, Save, Eye, AlertTriangle } from 'lucide-react'
@@ -46,11 +47,13 @@ export const ArticleEditorPage: React.FC = () => {
   const [featured, setFeatured] = useState(false)
   const [status, setStatus] = useState<'saved' | 'published'>('saved')
   const [category, setCategory] = useState('')
-  const [difficulty, setDifficulty] = useState('beginner')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPreview, setIsPreview] = useState(false)
+  
+  // Debug authentication state - after article state is declared
+  const debugInfo = useAuthDebug(article)
   
   // Autosave state
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -106,7 +109,6 @@ export const ArticleEditorPage: React.FC = () => {
       tags: tags,
       featured,
       category,
-      difficulty
     }
     
     // Check if current data differs from last saved data
@@ -114,10 +116,11 @@ export const ArticleEditorPage: React.FC = () => {
       const hasChanges = JSON.stringify(currentData) !== JSON.stringify(lastSavedData)
       setHasUnsavedChanges(hasChanges)
     } else {
-      // No last saved data yet, assume no changes
-      setHasUnsavedChanges(false)
+      // For new articles, check if any required fields are filled
+      const hasContent = !!(title.trim() || content.trim() || excerpt.trim() || summary.trim())
+      setHasUnsavedChanges(hasContent)
     }
-  }, [title, content, excerpt, summary, tags, featured, category, difficulty, lastSavedData])
+  }, [title, content, excerpt, summary, tags, featured, category, lastSavedData])
   
   // Warn user before leaving if there are unsaved changes
   useEffect(() => {
@@ -152,7 +155,7 @@ export const ArticleEditorPage: React.FC = () => {
           const existingArticle = await getArticleById(
             contentType,
             id,
-            user.id,
+            user.uid,
             user.role
           )
           
@@ -162,16 +165,14 @@ export const ArticleEditorPage: React.FC = () => {
           }
           
           // Pre-fill form with existing data
+          setArticle(existingArticle)
           setTitle(existingArticle.title || '')
           setContent(existingArticle.content || '')
           setExcerpt(existingArticle.excerpt || '')
-          setSummary(existingArticle.summary || '')
           setTags(existingArticle.tags || [])
           setFeatured(existingArticle.featured || false)
           setStatus(existingArticle.status || 'saved')
           setCategory(existingArticle.category || '')
-          setDifficulty(existingArticle.difficulty || 'beginner')
-          setArticle(existingArticle)
         } else {
           // Create mode - reset form
           setTitle('')
@@ -182,7 +183,6 @@ export const ArticleEditorPage: React.FC = () => {
           setFeatured(false)
           setStatus('saved')
           setCategory(contentType === 'news' ? 'general' : 'quan-su')
-          setDifficulty('beginner')
           setArticle(null)
         }
       } catch (err) {
@@ -267,9 +267,33 @@ export const ArticleEditorPage: React.FC = () => {
   
   // Core save operation
   const handleSave = async (newStatus: 'saved' | 'published') => {
+    
     if (!user || !title.trim() || !content.trim()) {
       setError('Vui lòng nhập tiêu đề và nội dung')
       return
+    }
+    
+    // Debug authentication state
+    logAuthDebug(debugInfo, `ArticleEditor Save - ${contentType}`)
+    
+    // Check if user document exists in Firestore
+    if (user?.uid) {
+      const userDocCheck = await checkFirestoreUserDocument(user.uid)
+      
+      if (!userDocCheck.exists) {
+        setError(`User document issue: ${userDocCheck.error}. Please contact administrator.`)
+        return
+      }
+      
+      if (userDocCheck.role !== 'editor') {
+        setError(`User role is "${userDocCheck.role}". Only editors can create articles.`)
+        return
+      }
+      
+      if (!userDocCheck.isActive) {
+        setError('Your account is not active. Please contact administrator.')
+        return
+      }
     }
     
     // Validation for knowledge articles
@@ -292,19 +316,20 @@ export const ArticleEditorPage: React.FC = () => {
       setError(null)
       setStatus(newStatus)
       
+      
       const articleData = {
         title: title.trim(),
         slug: generateSlug(title.trim()),
         content: content.trim(),
-        excerpt: excerpt.trim() || undefined,
-        summary: summary.trim() || undefined,
+        excerpt: excerpt.trim() || '',
+        summary: summary.trim() || '',
         tags: tags,
         featured,
         status: newStatus,
         author: {
-          uid: user.id,
-          displayName: user.username,
-          photoURL: undefined
+          uid: user.uid,
+          displayName: user.displayName,
+          photoURL: ''
         },
         // Type-specific fields
         ...(contentType === 'news' && {
@@ -319,7 +344,6 @@ export const ArticleEditorPage: React.FC = () => {
         }),
         ...(contentType === 'knowledge' && {
           category: category || 'quan-su',
-          difficulty,
           estimatedTime: calculateReadingTime(content),
           engagement: {
             views: article?.engagement?.views || 0,
@@ -342,13 +366,14 @@ export const ArticleEditorPage: React.FC = () => {
         })
       }
       
+      
       if (isEditMode && id && article) {
         // Update existing article
         await updateArticle(
           contentType,
           id,
           articleData,
-          user.id,
+          user.uid,
           user.role
         )
       } else {
@@ -356,7 +381,7 @@ export const ArticleEditorPage: React.FC = () => {
         await createArticle(
           contentType,
           articleData,
-          user.id
+          user.uid
         )
       }
       
@@ -393,9 +418,9 @@ export const ArticleEditorPage: React.FC = () => {
     const now = new Date()
     return {
       author: {
-        uid: user?.id || '',
-        displayName: user?.username || '',
-        photoURL: undefined
+        uid: user?.uid || '',
+        displayName: user?.displayName || '',
+        photoURL: ''
       },
       readingTime: calculateReadingTime(content),
       estimatedTime: calculateReadingTime(content),
@@ -631,18 +656,6 @@ export const ArticleEditorPage: React.FC = () => {
                 </select>
               </div>
               
-              <div className="editor-field">
-                <label>Cấp độ</label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  disabled={!canUpdate}
-                >
-                  <option value="beginner">Cơ bản</option>
-                  <option value="intermediate">Trung cấp</option>
-                  <option value="advanced">Nâng cao</option>
-                </select>
-              </div>
             </div>
           </>
         )}

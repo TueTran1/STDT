@@ -34,7 +34,6 @@ export const useFirestore = <T extends { id: string }>(
       setData(documents)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
-      console.error(`Error fetching ${collectionName}:`, err)
     } finally {
       setLoading(false)
     }
@@ -49,27 +48,28 @@ export const useFirestore = <T extends { id: string }>(
 
 // Specific hook for knowledge articles
 export const useKnowledge = (section?: string) => {
-  const constraints = section 
-    ? [where('status', '==', 'published'), where('category', '==', section), orderBy('createdAt', 'desc')]
-    : [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
+  const constraints = [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
 
-  return useFirestore<KnowledgeDocument>('knowledge', constraints)
+  const result = useFirestore<KnowledgeDocument>('knowledge', constraints)
+  
+  // Apply client-side filtering for section if provided
+  const filteredData = section 
+    ? result.data.filter(item => item.category === section)
+    : result.data
+
+  return { ...result, data: filteredData }
 }
 
 // Specific hook for news articles
-export const useNews = (category?: string) => {
-  const constraints = category 
-    ? [where('status', '==', 'published'), where('category', '==', category)]
-    : [where('status', '==', 'published')]
+export const useNews = () => {
+  const constraints = [where('status', '==', 'published')]
 
   return useFirestore<NewsDocument>('news', constraints)
 }
 
 // Specific hook for traditions
-export const useTraditions = (category?: string) => {
-  const constraints = category 
-    ? [where('status', '==', 'published'), where('category', '==', category), orderBy('createdAt', 'desc')]
-    : [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
+export const useTraditions = () => {
+  const constraints = [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
 
   return useFirestore<TraditionDocument>('traditions', constraints)
 }
@@ -103,7 +103,6 @@ export const useDocument = <T extends { id: string }>(
         setData(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch document')
-        console.error(`Error fetching ${collectionName}/${docId}:`, err)
       } finally {
         setLoading(false)
       }

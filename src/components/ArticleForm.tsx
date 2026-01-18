@@ -3,6 +3,7 @@ import { Save, X, Eye } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useContentPermission } from '../hooks/useContentPermissions'
 import { validateArticle } from '../services/articleService'
+import { validateFirestoreRequirements, checkFirestoreUserDocument } from '../utils/debugAuth'
 import type { Article, ArticleType } from '../services/articleService'
 import type { NewsArticle, KnowledgeArticle } from '../types/firestore'
 import './ArticleForm.css'
@@ -43,22 +44,23 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
   useEffect(() => {
     if (article) {
       setFormData(article)
-    } else {
-      // Initialize with default values for new article
+    } else if (user?.uid) {
+      // Initialize with default values for new article only if user is available
       const defaultData: Partial<Article> = {
         title: '',
         slug: '',
         content: '',
+        excerpt: '',
         tags: [],
         featured: false,
         status: 'saved',
         author: {
-          uid: user?.id || '',
-          displayName: user?.username || '',
-          photoURL: undefined
+          uid: user.uid,
+          displayName: user.displayName || '',
+          photoURL: ''
         },
-        createdBy: user?.id || '',
-        updatedBy: user?.id || ''
+        createdBy: user.uid,
+        updatedBy: user.uid
       }
       
       // Add type-specific defaults
@@ -81,7 +83,6 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
           ...defaultData,
           summary: '',
           category: 'quan-su',
-          difficulty: 'beginner',
           estimatedTime: 10,
           engagement: {
             views: 0,
@@ -89,7 +90,6 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
             shares: 0,
             bookmarks: 0
           },
-          type: 'article',
           subcategory: '',
           media: {
             images: [],
@@ -106,6 +106,9 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
       } else {
         setFormData(defaultData)
       }
+    } else {
+      // User not available, clear form data
+      setFormData({})
     }
   }, [article, articleType, user])
 
@@ -154,16 +157,52 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
       return
     }
     
+    // Check if user document exists in Firestore
+    if (user?.uid) {
+      const userDocCheck = await checkFirestoreUserDocument(user.uid)
+            
+      if (!userDocCheck.exists) {
+        setErrors([`User document issue: ${userDocCheck.error}. Please contact administrator.`])
+        return
+      }
+      
+      if (userDocCheck.role !== 'editor') {
+        setErrors([`User role is "${userDocCheck.role}". Only editors can create articles.`])
+        return
+      }
+      
+      if (!userDocCheck.isActive) {
+        setErrors(['Your account is not active. Please contact administrator.'])
+        return
+      }
+    }
+    
+    // Validate Firestore requirements
+    const firestoreErrors = validateFirestoreRequirements(user, formData)
+    if (firestoreErrors.length > 0) {
+      setErrors(firestoreErrors)
+            return
+    }
+    
     try {
       await onSave(formData)
       setIsDirty(false)
     } catch (error) {
-      setErrors(['Lưu bài viết thất bại. Vui lòng thử lại.'])
+      // Show the actual error message for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Lưu bài viết thất bại. Vui lòng thử lại.'
+      setErrors([errorMessage])
     }
   }
 
   // Check if form can be saved
-  const canSave = canUpdate && (isDirty || !article)
+  const canSave = canUpdate && (isDirty || !article) && !!user?.uid
+
+  // If user is not authenticated, show error
+  useEffect(() => {
+    if (!user?.uid) {
+      setErrors(['Bạn cần đăng nhập để tạo hoặc chỉnh sửa bài viết'])
+    }
+  }, [user])
 
   // Render type-specific fields
   const renderTypeSpecificFields = () => {
@@ -256,20 +295,6 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
                 <option value="ky-thuat">Kỹ thuật</option>
               </select>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="difficulty">Cấp độ</label>
-              <select
-                id="difficulty"
-                value={knowledgeData.difficulty || 'beginner'}
-                onChange={(e) => handleInputChange('difficulty', e.target.value)}
-                disabled={!canUpdate}
-              >
-                <option value="beginner">Cơ bản</option>
-                <option value="intermediate">Trung cấp</option>
-                <option value="advanced">Nâng cao</option>
-              </select>
-            </div>
           </div>
 
           <div className="form-row">
@@ -340,6 +365,7 @@ export const ArticleForm: React.FC<ArticleFormProps> = ({
 
   return (
     <div className={`article-form ${className}`}>
+      
       <div className="form-header">
         <h3>
           {article ? 'Chỉnh sửa' : 'Tạo mới'} {articleType === 'news' ? 'Tin tức' : 'Kiến thức'}

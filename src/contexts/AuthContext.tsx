@@ -68,14 +68,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } else {
             // Firebase user exists but no valid Firestore profile
             // Treat as unauthorized - clear Firebase session
-            console.error('Firebase user exists but no active Firestore profile found')
-            await firebaseAuthService.signOutUser()
+                        await firebaseAuthService.signOutUser()
             setUser(null)
             localStorage.removeItem('authUser')
           }
         } catch (error) {
-          console.error('Error loading Firestore profile:', error)
-          // Don't trust Firebase Auth without valid Firestore profile
+                    // Don't trust Firebase Auth without valid Firestore profile
           await firebaseAuthService.signOutUser()
           setUser(null)
           localStorage.removeItem('authUser')
@@ -118,8 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 4. Persist non-sensitive UI state only
       
     } catch (error) {
-      console.error('Login error:', error)
-      
+            
       if (error instanceof Error) {
         // Handle Firebase Auth errors
         if (error.message.includes('auth/user-not-found')) {
@@ -164,8 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Remove non-sensitive UI state from localStorage
       localStorage.removeItem('authUser')
     } catch (error) {
-      console.error('Logout error:', error)
-      throw error
+            throw error
     }
   }
 

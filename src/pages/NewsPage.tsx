@@ -40,7 +40,7 @@ export const NewsPage: React.FC = () => {
       setSavedLoading(true)
       setSavedError(null)
       
-      const savedArticles = await getSavedArticles('news', user.id)
+      const savedArticles = await getSavedArticles('news', user.uid)
       setSavedNews(savedArticles)
     } catch (err) {
       setSavedError(err instanceof Error ? err.message : 'Lỗi khi tải bài viết đã lưu')

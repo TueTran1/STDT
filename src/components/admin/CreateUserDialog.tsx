@@ -79,12 +79,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
       if (response.success) {
         // User created successfully
-        console.log('User created successfully:', {
-          uid: response.uid,
-          email: response.email,
-          temporaryPassword: response.temporaryPassword
-        })
-
+        
         // Show success message with temporary password
         alert(
           `Người dùng đã được tạo thành công!\n\n` +
@@ -107,8 +102,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         setError(response.message || 'Failed to create user')
       }
     } catch (err: any) {
-      console.error('User creation error:', err)
-      
+            
       // Handle Cloud Function errors
       if (err.code === 'unavailable' || err.code === 'deadline-exceeded') {
         setError('Lỗi mạng. Vui lòng thử lại sau.')

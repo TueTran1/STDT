@@ -22,11 +22,11 @@ export const useContentPermission = (document?: ContentDocument): ContentPermiss
   const { user, hasRole } = useAuth()
 
   // Check if user owns the document
-  const isOwner = document ? checkDocumentOwnership(document, user?.id) : false
+  const isOwner = document ? checkDocumentOwnership(document, user?.uid) : false
 
   // Permission logic based on role
   const canCreate = hasRole('editor') && !hasRole('admin')
-  const canUpdate = hasRole('editor') && !hasRole('admin') && isOwner
+  const canUpdate = (hasRole('editor') && !hasRole('admin') && (isOwner || !document)) || hasRole('admin')
   const canDelete = hasRole('admin')
 
   return {

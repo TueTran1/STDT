@@ -35,23 +35,6 @@ service cloud.firestore {
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Check if user is the article author (createdBy or author.uid)
-    function isArticleOwner(articleData) {
-      return isAuthenticated() && 
-        (request.auth.uid == articleData.createdBy || 
-         request.auth.uid == articleData.author.uid);
-    }
-    
-    // Prevent UID spoofing - ensure createdBy matches authenticated user
-    function isValidCreatedBy() {
-      return request.resource.data.createdBy == request.auth.uid;
-    }
-    
-    // Prevent author.uid spoofing
-    function isValidAuthorUid() {
-      return request.resource.data.author.uid == request.auth.uid;
-    }
 
     // ========================================
     // USERS COLLECTION - Firebase Auth Integration
@@ -62,24 +45,20 @@ service cloud.firestore {
       allow read: if isAuthenticated() && request.auth.uid == userId;
       
       // Allow read for login queries (findUserForLogin) - both authenticated and unauthenticated
-      // This allows querying by email/displayName during login process
       allow read: if true;
       
       // Users can update their own profile (except role, isActive, uid)
-      // Firebase Auth UID must match document userId
-      allow update: if isOwner(userId) && isUserActive() &&
-        get(/databases/$(database)/documents/users/$(userId)).data.isActive == true &&
-        request.resource.data.keys().hasAll(['displayName', 'profile', 'preferences']) &&
-        !request.resource.data.keys().hasAny(['role', 'isActive', 'uid', 'email', 'passwordHash']);
+      allow update: if isOwner(userId) && 
+        get(/databases/$(database)/documents/users/$(userId)).data.isActive == true;
       
       // Admins can update any user profile
-      allow update: if isAdmin();
+      allow update: if isAuthenticated() && getUserRole() == 'admin';
       
       // Only admins can create users
-      allow create: if isAdmin();
+      allow create: if isAuthenticated() && getUserRole() == 'admin';
       
       // Only admins can delete users
-      allow delete: if isAdmin();
+      allow delete: if isAuthenticated() && getUserRole() == 'admin';
     }
 
     // Allow list queries for login purposes and admin access
@@ -89,144 +68,134 @@ service cloud.firestore {
     }
 
     // ========================================
-    // NEWS COLLECTION - Firebase Auth Integration
+    // KNOWLEDGE COLLECTION - Simplified Rules
     // ========================================
     
-    // NEWS DOCUMENT ACCESS RULES:
-    // 1. Public users can read published articles only
-    // 2. Editors can read published content + their own saved content
-    // 3. Admins can read all content
-    // 4. Editors can create and update their own articles (cannot delete)
-    // 5. Admins can delete any content (cannot create/update)
-    // 6. Firebase Auth UID prevents spoofing
-    // 7. User must be active in Firestore
-    
-    match /news/{newsId} {
+    match /knowledge/{knowledgeId} {
       // Public read access for published articles
-      // No authentication required for public content
       allow read: if resource.data.status == 'published';
       
       // Editor read access for their own saved articles
-      // Editors can read published content + their own drafts/saved articles
-      allow read: if isEditor() && 
-        (resource.data.status == 'published' || isArticleOwner(resource.data));
+      allow read: if isAuthenticated() && 
+        (resource.data.status == 'published' || resource.data.createdBy == request.auth.uid);
       
       // Admin read access for all articles
-      // Admins have full read access to all content
-      allow read: if isAdmin();
+      allow read: if isAuthenticated() && getUserRole() == 'admin';
       
-      // Editor create permissions (cannot delete)
-      // Editors can create articles with their Firebase Auth UID
-      allow create: if isEditor() && isValidCreatedBy() && isValidAuthorUid();
+      // Editor create permissions
+      allow create: if isAuthenticated() && 
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.author.uid == request.auth.uid;
       
-      // Editor update permissions (cannot delete)
-      // Editors can update their own articles, createdBy is immutable
-      allow update: if isEditor() && 
-        isArticleOwner(resource.data) &&
-        request.resource.data.createdBy == resource.data.createdBy && // createdBy immutable
-        request.resource.data.author.uid == resource.data.author.uid; // author.uid immutable
+      // Editor update permissions
+      allow update: if isAuthenticated() && 
+        resource.data.createdBy == request.auth.uid;
       
-      // Admin delete permissions (cannot create/update)
-      // Only admins can delete articles
-      allow delete: if isAdmin();
+      // Admin delete permissions
+      allow delete: if isAuthenticated() && getUserRole() == 'admin';
     }
 
-    // News Collection - List access
-    match /news {
-      // Allow list for all users - individual document permissions will apply
-      // This enables public access to published articles while restricting others
+    // Knowledge Collection - Enhanced List access with proper query support
+    match /knowledge {
+      // Allow list for published knowledge (public access)
       allow list: if true;
+      
+      // Allow list for editors to access their own saved articles (both createdBy and author.uid)
+      allow list: if isAuthenticated() && 
+        request.query.where.length >= 2 &&
+        request.query.where[0] == ['status', '==', 'saved'] &&
+        (request.query.where[1] == ['createdBy', '==', request.auth.uid] || 
+         request.query.where[1] == ['author.uid', '==', request.auth.uid]);
+      
+      // Allow list for admins to access all knowledge
+      allow list: if isAuthenticated() && getUserRole() == 'admin';
+      
+      // Allow get for individual documents (handled by /knowledge/{knowledgeId} rule)
+      allow get: if false;
+    }
+
+    // ========================================
+    // NEWS COLLECTION - Simplified Rules
+    // ========================================
+    
+    match /news/{newsId} {
+      // Public read access for published articles
+      allow read: if resource.data.status == 'published';
+      
+      // Editor read access for their own saved articles
+      allow read: if isAuthenticated() && 
+        (resource.data.status == 'published' || resource.data.createdBy == request.auth.uid);
+      
+      // Admin read access for all articles
+      allow read: if isAuthenticated() && getUserRole() == 'admin';
+      
+      // Editor create permissions
+      allow create: if isAuthenticated() && 
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.author.uid == request.auth.uid;
+      
+      // Editor update permissions
+      allow update: if isAuthenticated() && 
+        resource.data.createdBy == request.auth.uid;
+      
+      // Admin delete permissions
+      allow delete: if isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    // News Collection - Enhanced List access with proper query support
+    match /news {
+      // Allow list for published news (public access)
+      allow list: if true;
+      
+      // Allow list for editors to access their own saved articles (both createdBy and author.uid)
+      allow list: if isAuthenticated() && 
+        request.query.where.length >= 2 &&
+        request.query.where[0] == ['status', '==', 'saved'] &&
+        (request.query.where[1] == ['createdBy', '==', request.auth.uid] || 
+         request.query.where[1] == ['author.uid', '==', request.auth.uid]);
+      
+      // Allow list for admins to access all news
+      allow list: if isAuthenticated() && getUserRole() == 'admin';
       
       // Allow get for individual documents (handled by /news/{newsId} rule)
       allow get: if false;
     }
 
-    // Traditions Collection - Basic access control
+    // ========================================
+    // OTHER COLLECTIONS - Basic Rules
+    // ========================================
+    
+    // Traditions Collection
     match /traditions/{traditionId} {
-      // Public read for published traditions (no auth required)
+      // Public read for published traditions
       allow read: if resource.data.status == 'published';
       
       // Authenticated users can read their own drafts
       allow read: if isAuthenticated() && resource.data.contributor.uid == request.auth.uid;
       
       // Admins can read all traditions
-      allow read: if isAdmin();
+      allow read: if isAuthenticated() && getUserRole() == 'admin';
       
       // Admins can create, update, delete any traditions
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isAuthenticated() && getUserRole() == 'admin';
     }
 
-    // Traditions Collection - List access
     match /traditions {
       // Allow list for published traditions (public access)
       allow list: if true;
-      
-      // Allow get for individual documents (handled by /traditions/{traditionId} rule)
       allow get: if false;
     }
 
-    // ========================================
-    // KNOWLEDGE COLLECTION - Firebase Auth Integration
-    // ========================================
-    
-    // KNOWLEDGE DOCUMENT ACCESS RULES:
-    // 1. Public users can read published articles only
-    // 2. Editors can read published content + their own saved content
-    // 3. Admins can read all content
-    // 4. Editors can create and update their own articles (cannot delete)
-    // 5. Admins can delete any content (cannot create/update)
-    // 6. Firebase Auth UID prevents spoofing
-    // 7. User must be active in Firestore
-    
-    match /knowledge/{knowledgeId} {
-      // Public read access for published articles
-      // No authentication required for public content
-      allow read: if resource.data.status == 'published';
-      
-      // Editor read access for their own saved articles
-      // Editors can read published content + their own drafts/saved articles
-      allow read: if isEditor() && 
-        (resource.data.status == 'published' || isArticleOwner(resource.data));
-      
-      // Admin read access for all articles
-      // Admins have full read access to all content
-      allow read: if isAdmin();
-      
-      // Editor create permissions (cannot delete)
-      // Editors can create articles with their Firebase Auth UID
-      allow create: if isEditor() && isValidCreatedBy() && isValidAuthorUid();
-      
-      // Editor update permissions (cannot delete)
-      // Editors can update their own articles, createdBy is immutable
-      allow update: if isEditor() && 
-        isArticleOwner(resource.data) &&
-        request.resource.data.createdBy == resource.data.createdBy && // createdBy immutable
-        request.resource.data.author.uid == resource.data.author.uid; // author.uid immutable
-      
-      // Admin delete permissions (cannot create/update)
-      // Only admins can delete articles
-      allow delete: if isAdmin();
-    }
-
-    // Knowledge Collection - List access
-    match /knowledge {
-      // Allow list for published knowledge (public access)
-      allow list: if true;
-      
-      // Allow get for individual documents (handled by /knowledge/{knowledgeId} rule)
-      allow get: if false;
-    }
-
-    // Notifications Collection - User-specific access
+    // Notifications Collection
     match /notifications/{notificationId} {
       // Users can only read their own notifications
       allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
       
       // Admins can read all notifications
-      allow read: if isAdmin();
+      allow read: if isAuthenticated() && getUserRole() == 'admin';
       
       // Admins can create, update, delete any notifications
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isAuthenticated() && getUserRole() == 'admin';
     }
 
     // User-specific subcollections
@@ -237,14 +206,14 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.isActive == true;
       
       // Admins can access any user subcollections
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthenticated() && getUserRole() == 'admin';
     }
 
-    // Comments subcollection - Basic moderation
+    // Comments subcollection
     match /{collection}/{docId}/comments/{commentId} {
       // Public read for active comments on published content
       allow read: if resource.data.status == 'active' && 
-        get(/databases/$(database)/documents/$(collection)/$(docId)).data.status == 'published';
+        resource.data.status == 'published';
       
       // Authenticated users can create comments
       allow create: if isAuthenticated();
@@ -256,7 +225,7 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
       
       // Admins can manage any comment
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isAuthenticated() && getUserRole() == 'admin';
     }
 
     // Deny all other access by default

@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useKnowledge } from '../hooks/useFirestore'
 import { 
-  getPublishedArticles, 
-  getSavedArticles,
-  type ContentType 
+  getSavedArticles
 } from '../services/contentService'
 import { 
   ArticleCard, 
@@ -15,6 +13,7 @@ import {
   EmptyState
 } from '../components/ui'
 import { MilitaryPageLayout } from '../components/layout'
+import { KnowledgeSectionSelector, type KnowledgeSection } from '../components/knowledge/KnowledgeSectionSelector'
 import { BookOpen, Plus, Save } from 'lucide-react'
 import quanSuImage from '../assets/quan-su.png'
 import hauCanImage from '../assets/hau-can.png'
@@ -51,7 +50,7 @@ export const KnowledgePage: React.FC = () => {
       setSavedLoading(true)
       setSavedError(null)
       
-      const savedArticles = await getSavedArticles('knowledge', user.id)
+      const savedArticles = await getSavedArticles('knowledge', user.uid)
       setSavedKnowledge(savedArticles)
     } catch (err) {
       setSavedError(err instanceof Error ? err.message : 'Lỗi khi tải bài viết đã lưu')

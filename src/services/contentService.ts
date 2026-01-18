@@ -8,7 +8,7 @@ import type { NewsArticle, KnowledgeArticle } from '../types/firestore'
 
 // Content types
 export type ContentType = 'news' | 'knowledge'
-export type ContentStatus = 'saved' | 'published' | 'draft' | 'archived'
+export type ContentStatus = 'saved' | 'published'
 export type Article = NewsArticle | KnowledgeArticle
 
 // User interface for service layer
@@ -43,7 +43,6 @@ interface CreateArticleData {
     keywords?: string[]
   }
   // Knowledge-specific fields
-  difficulty?: string
   estimatedTime?: number
   engagement?: {
     views: number
@@ -83,16 +82,23 @@ export const createArticle = async (
   userId: string
 ): Promise<Article> => {
   try {
+    
+    if (!data.author || data.author.uid !== userId) {
+            throw new Error(`Author UID must match current user ID for permission validation`)
+    }
+    
+    
     const collectionRef = collection(db, type)
     
-    // Prepare article document with Firestore timestamps
+    // Prepare article document with Firestore timestamps and required fields
     const articleDoc = {
       ...data,
-      createdBy: userId,
-      updatedBy: userId,
+      createdBy: userId, // Required by Firestore rules
+      updatedBy: userId, // Required by Firestore rules
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     }
+    
     
     // Add document to Firestore
     const docRef = await addDoc(collectionRef, articleDoc)
@@ -107,6 +113,10 @@ export const createArticle = async (
       updatedAt: new Date()
     } as Article
   } catch (error) {
+    // Provide more specific error message for permission issues
+    if (error instanceof Error && error.message.includes('permission-denied')) {
+      throw new Error(`Missing or insufficient permissions: ${error.message}. Please ensure you're logged in as an editor and your account is active.`)
+    }
     throw new Error(`Failed to create ${type} article: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
@@ -302,39 +312,77 @@ export const getSavedArticles = async (
   try {
     const collectionRef = collection(db, type)
     
-    // Build query constraints for saved articles
-    const constraints: QueryConstraint[] = [
-      where('status', '==', 'saved'), // Only saved articles
-      where('createdBy', '==', userId) // Only user's own articles (Firebase Auth UID)
-    ]
-    
-    // Add category filter if provided
-    if (options.category) {
-      constraints.push(where('category', '==', options.category))
+    // Try primary query first (createdBy field)
+    try {
+      // Build query constraints for saved articles
+      const constraints: QueryConstraint[] = [
+        where('status', '==', 'saved'), // Only saved articles
+        where('createdBy', '==', userId) // Only user's own articles (Firebase Auth UID)
+      ]
+      
+      // Add category filter if provided
+      if (options.category) {
+        constraints.push(where('category', '==', options.category))
+      }
+      
+      // Add ordering
+      const orderByField = options.orderBy || 'createdAt'
+      const orderDirection = options.orderDirection || 'desc'
+      constraints.push(orderBy(orderByField, orderDirection))
+      
+      // Add limit if provided
+      if (options.limit && options.limit > 0) {
+        constraints.push(limitFn(options.limit))
+      }
+      
+      const articlesQuery = query(collectionRef, ...constraints)
+      const querySnapshot = await getDocs(articlesQuery)
+      
+      return querySnapshot.docs.map((doc: QueryDocumentSnapshot) => {
+        const data = doc.data()
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          updatedAt: data.updatedAt?.toDate?.() || new Date()
+        } as Article
+      })
+    } catch (primaryError) {
+      // If primary query fails due to permissions, try secondary query (author.uid field)
+      
+      const constraints: QueryConstraint[] = [
+        where('status', '==', 'saved'), // Only saved articles
+        where('author.uid', '==', userId) // Check author.uid field as fallback
+      ]
+      
+      // Add category filter if provided
+      if (options.category) {
+        constraints.push(where('category', '==', options.category))
+      }
+      
+      // Add ordering
+      const orderByField = options.orderBy || 'createdAt'
+      const orderDirection = options.orderDirection || 'desc'
+      constraints.push(orderBy(orderByField, orderDirection))
+      
+      // Add limit if provided
+      if (options.limit && options.limit > 0) {
+        constraints.push(limitFn(options.limit))
+      }
+      
+      const articlesQuery = query(collectionRef, ...constraints)
+      const querySnapshot = await getDocs(articlesQuery)
+      
+      return querySnapshot.docs.map((doc: QueryDocumentSnapshot) => {
+        const data = doc.data()
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          updatedAt: data.updatedAt?.toDate?.() || new Date()
+        } as Article
+      })
     }
-    
-    // Add ordering
-    const orderByField = options.orderBy || 'createdAt'
-    const orderDirection = options.orderDirection || 'desc'
-    constraints.push(orderBy(orderByField, orderDirection))
-    
-    // Add limit if provided
-    if (options.limit && options.limit > 0) {
-      constraints.push(limitFn(options.limit))
-    }
-    
-    const articlesQuery = query(collectionRef, ...constraints)
-    const querySnapshot = await getDocs(articlesQuery)
-    
-    return querySnapshot.docs.map((doc: QueryDocumentSnapshot) => {
-      const data = doc.data()
-      return {
-        ...data,
-        id: doc.id,
-        createdAt: data.createdAt?.toDate?.() || new Date(),
-        updatedAt: data.updatedAt?.toDate?.() || new Date()
-      } as Article
-    })
   } catch (error) {
     // Surface auth errors clearly to UI - do not catch silently
     
