@@ -1,10 +1,10 @@
-// Migration script to create Firebase Auth users from existing Firestore users
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+// Migration script to align Firestore users with Firebase Auth UIDs
+// ONE-TIME script - DO NOT run automatically in production
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { getDocs, collection, query, where, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import { db, auth } from '../lib/firebase'
 
-const auth = getAuth()
-
+// Create Firebase Auth user and write UID to Firestore
 async function migrateUserToFirebaseAuth(email: string, password: string, displayName: string) {
   try {
     console.log(`Creating Firebase Auth user for: ${email}`)
@@ -26,62 +26,98 @@ async function migrateUserToFirebaseAuth(email: string, password: string, displa
   }
 }
 
-async function migrateExistingUsers() {
+// Audit Firestore users and identify migration candidates
+async function auditFirestoreUsers() {
   try {
-    console.log('Starting migration of existing Firestore users to Firebase Auth...')
+    console.log('🔍 Auditing Firestore users for Firebase UID alignment...')
     
     // Get all users from Firestore
     const usersQuery = query(collection(db, 'users'))
     const querySnapshot = await getDocs(usersQuery)
     
-    let successCount = 0
-    let failureCount = 0
+    let totalUsers = 0
+    let usersWithUid = 0
+    let usersWithoutUid = 0
+    let usersMissingRequired = 0
+    
+    console.log('\n📊 User Audit Results:')
+    console.log('=' .repeat(50))
     
     for (const doc of querySnapshot.docs) {
       const userData = doc.data()
+      totalUsers++
       
-      // Skip users that already have a Firebase UID
-      if (userData.uid && userData.uid !== '') {
-        console.log(`⏭️  Skipping ${userData.email} - already has Firebase UID: ${userData.uid}`)
-        continue
+      // Check required fields
+      const hasUid = userData.uid && userData.uid !== ''
+      const hasRole = userData.role && (userData.role === 'admin' || userData.role === 'editor')
+      const hasDisplayName = userData.displayName && userData.displayName.trim() !== ''
+      const hasActive = typeof userData.isActive === 'boolean'
+      
+      if (hasUid) {
+        usersWithUid++
+        console.log(`✅ ${userData.email} - UID: ${userData.uid}, Role: ${userData.role}, Active: ${userData.isActive}`)
+      } else {
+        usersWithoutUid++
+        const status = hasRole && hasDisplayName && hasActive ? 'READY' : 'INCOMPLETE'
+        console.log(`⚠️  ${userData.email} - MISSING UID - Status: ${status}`)
+        console.log(`   Role: ${userData.role || 'MISSING'}, DisplayName: ${hasDisplayName ? 'YES' : 'MISSING'}, Active: ${hasActive ? 'YES' : 'MISSING'}`)
+        
+        if (!hasRole || !hasDisplayName || !hasActive) {
+          usersMissingRequired++
+        }
       }
-      
-      // Skip users without email or password
-      if (!userData.email || !userData.passwordHash) {
-        console.log(`⚠️  Skipping user ${doc.id} - missing email or password hash`)
-        continue
-      }
-      
-      // We need the original password, but we only have the hash
-      // This means we need to ask the admin to provide the password
-      console.log(`🔐 User ${userData.email} needs manual migration - password hash found but original password needed`)
-      
-      failureCount++
     }
     
-    console.log(`\nMigration complete:`)
-    console.log(`- Success: ${successCount}`)
-    console.log(`- Failed/Manual: ${failureCount}`)
+    console.log('\n📈 Summary:')
+    console.log(`Total users: ${totalUsers}`)
+    console.log(`Users with Firebase UID: ${usersWithUid}`)
+    console.log(`Users without Firebase UID: ${usersWithoutUid}`)
+    console.log(`Users missing required fields: ${usersMissingRequired}`)
+    
+    return {
+      totalUsers,
+      usersWithUid,
+      usersWithoutUid,
+      usersMissingRequired
+    }
     
   } catch (error) {
-    console.error('Migration failed:', error)
+    console.error('❌ Audit failed:', error)
+    throw error
   }
 }
 
-// Manual migration for specific user
+// Manual migration for specific user (idempotent)
 async function migrateSpecificUser(email: string, password: string) {
   try {
+    console.log(`🔄 Starting migration for: ${email}`)
+    
     // Find user in Firestore
     const usersQuery = query(collection(db, 'users'), where('email', '==', email))
     const querySnapshot = await getDocs(usersQuery)
     
     if (querySnapshot.empty) {
       console.log(`❌ User with email ${email} not found in Firestore`)
-      return
+      return false
     }
     
     const userDoc = querySnapshot.docs[0]
     const userData = userDoc.data()
+    
+    // Check if already migrated
+    if (userData.uid && userData.uid !== '') {
+      console.log(`⏭️  User ${email} already has Firebase UID: ${userData.uid}`)
+      return true // Idempotent success
+    }
+    
+    // Validate required fields
+    if (!userData.role || !userData.displayName || typeof userData.isActive !== 'boolean') {
+      console.log(`❌ User ${email} missing required fields. Please fix before migration:`)
+      console.log(`   Role: ${userData.role || 'MISSING'}`)
+      console.log(`   DisplayName: ${userData.displayName || 'MISSING'}`)
+      console.log(`   Active: ${userData.isActive}`)
+      return false
+    }
     
     // Create Firebase Auth user
     const firebaseUid = await migrateUserToFirebaseAuth(email, password, userData.displayName)
@@ -94,11 +130,51 @@ async function migrateSpecificUser(email: string, password: string) {
       })
       
       console.log(`✅ Successfully migrated ${email} to Firebase Auth`)
+      console.log(`   Firestore ID: ${userDoc.id}`)
+      console.log(`   Firebase UID: ${firebaseUid}`)
+      return true
     }
     
+    return false
+    
   } catch (error) {
-    console.error(`Failed to migrate ${email}:`, error)
+    console.error(`❌ Failed to migrate ${email}:`, error)
+    return false
   }
 }
 
-export { migrateExistingUsers, migrateSpecificUser, migrateUserToFirebaseAuth }
+// Batch migration for users without UIDs (requires manual password provision)
+async function migrateUsersWithoutUids(userCredentials: Array<{email: string, password: string}>) {
+  try {
+    console.log('🔄 Starting batch migration for users without UIDs...')
+    
+    let successCount = 0
+    let failureCount = 0
+    
+    for (const credential of userCredentials) {
+      const success = await migrateSpecificUser(credential.email, credential.password)
+      if (success) {
+        successCount++
+      } else {
+        failureCount++
+      }
+    }
+    
+    console.log('\n📊 Batch Migration Results:')
+    console.log(`Success: ${successCount}`)
+    console.log(`Failed: ${failureCount}`)
+    
+    return { successCount, failureCount }
+    
+  } catch (error) {
+    console.error('❌ Batch migration failed:', error)
+    throw error
+  }
+}
+
+export { 
+  auditFirestoreUsers, 
+  migrateSpecificUser, 
+  migrateUsersWithoutUids, 
+  migrateUserToFirebaseAuth 
+}

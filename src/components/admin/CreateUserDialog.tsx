@@ -1,19 +1,13 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
-import { 
-  createUserWithEmailAndPassword,
-  updateProfile 
-} from 'firebase/auth'
-import { auth } from '../../lib/firebase'
-import { createUser } from '../../services/firestoreUserService'
+import { createUserSecure, type CreateUserRequest, type CreateUserResponse } from '../../services/secureUserService'
 import { useAuth } from '../../contexts/AuthContext'
 
 // Define types locally to avoid import issues
-interface CreateUserInput {
+interface CreateUserForm {
   displayName: string
   email: string
-  password: string
-  role: 'admin' | 'editor' // Only real Firestore roles
+  role: 'admin' | 'editor'
   isActive: boolean
 }
 
@@ -29,10 +23,9 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   onSuccess
 }) => {
   const { user, hasRole } = useAuth()
-  const [formData, setFormData] = useState<CreateUserInput>({
+  const [formData, setFormData] = useState<CreateUserForm>({
     displayName: '',
     email: '',
-    password: '',
     role: 'editor',
     isActive: true
   })
@@ -64,12 +57,6 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
       return
     }
 
-    if (!formData.password || formData.password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.')
-      setLoading(false)
-      return
-    }
-
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
@@ -79,69 +66,68 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
     }
 
     try {
-      // Step 1: Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      )
-      
-      const firebaseUser = userCredential.user
-      
-      // Step 2: Update Firebase Auth profile with display name
-      await updateProfile(firebaseUser, {
-        displayName: formData.displayName
-      })
-      
-      // Step 3: Create user profile in Firestore with role assignment
-      await createUser({
+      // Call secure backend function for user creation
+      const createUserRequest: CreateUserRequest = {
         email: formData.email,
-        password: formData.password, // Will be hashed in the service
         displayName: formData.displayName,
-        role: formData.role, // Role assigned through Firestore write
+        role: formData.role,
         isActive: formData.isActive
-      })
-      
-      // Step 4: Sign out the newly created user (admin stays signed in)
-      // Note: createUserWithEmailAndPassword signs in the new user, 
-      // so we need to handle this carefully in a real admin flow
-      // For now, we'll let the admin know the user was created successfully
-      
-      onSuccess()
-      onClose()
-      
-      // Reset form
-      setFormData({
-        displayName: '',
-        email: '',
-        password: '',
-        role: 'editor',
-        isActive: true
-      })
-    } catch (err) {
+      }
+
+      const result = await createUserSecure(createUserRequest)
+      const response = result.data as CreateUserResponse
+
+      if (response.success) {
+        // User created successfully
+        console.log('User created successfully:', {
+          uid: response.uid,
+          email: response.email,
+          temporaryPassword: response.temporaryPassword
+        })
+
+        // Show success message with temporary password
+        alert(
+          `Người dùng đã được tạo thành công!\n\n` +
+          `Email: ${response.email}\n` +
+          `Mật khẩu tạm thởi: ${response.temporaryPassword}\n\n` +
+          `Vui lòng lưu lại mật khẩu này và yêu cầu người dùng đổi mật khẩu khi đăng nhập lần đầu.`
+        )
+
+        onSuccess()
+        onClose()
+        
+        // Reset form
+        setFormData({
+          displayName: '',
+          email: '',
+          role: 'editor',
+          isActive: true
+        })
+      } else {
+        setError(response.message || 'Failed to create user')
+      }
+    } catch (err: any) {
       console.error('User creation error:', err)
       
-      // Handle specific Firebase Auth errors
-      if (err instanceof Error) {
-        if (err.message.includes('auth/email-already-in-use')) {
-          setError('Email này đã được sử dụng. Vui lòng chọn email khác.')
-        } else if (err.message.includes('auth/weak-password')) {
-          setError('Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn.')
-        } else if (err.message.includes('auth/invalid-email')) {
-          setError('Email không hợp lệ.')
-        } else {
-          setError(err.message || 'Failed to create user')
-        }
+      // Handle Cloud Function errors
+      if (err.code === 'unavailable' || err.code === 'deadline-exceeded') {
+        setError('Lỗi mạng. Vui lòng thử lại sau.')
+      } else if (err.code === 'permission-denied') {
+        setError('Bạn không có quyền thực hiện thao tác này.')
+      } else if (err.code === 'already-exists') {
+        setError('Email này đã được sử dụng. Vui lòng chọn email khác.')
+      } else if (err.code === 'invalid-argument') {
+        setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.')
       } else {
-        setError('Failed to create user')
+        setError(err.message || 'Failed to create user')
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const handleInputChange = (field: keyof CreateUserInput, value: string | boolean) => {
-    setFormData((prev: CreateUserInput) => ({
+  const handleInputChange = (field: keyof CreateUserForm, value: string | boolean) => {
+    setFormData((prev: CreateUserForm) => ({
       ...prev,
       [field]: value
     }))
@@ -187,21 +173,6 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
               onChange={(e) => handleInputChange('email', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
               placeholder="nhập email"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mật khẩu
-            </label>
-            <input
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
-              placeholder="Nhập mật khẩu"
-              minLength={6}
             />
           </div>
 

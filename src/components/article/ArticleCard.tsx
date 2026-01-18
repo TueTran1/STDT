@@ -4,7 +4,7 @@ import { ArticleMeta } from './ArticleMeta'
 import { ArticleTags } from './ArticleTags'
 import { ArticleAttachments } from './ArticleAttachments'
 import { ArticleFooter } from './ArticleFooter'
-import { Calendar, User } from 'lucide-react'
+import { Calendar, User, Save, Edit } from 'lucide-react'
 
 export interface Article {
   id: string
@@ -24,11 +24,13 @@ export interface Article {
   }>
   views?: number
   slug?: string
+  status?: 'saved' | 'published' | 'draft' | 'archived' // Added status field
 }
 
 export interface ArticleCardProps {
   article: Article
   onClick: (article: Article) => void
+  isSaved?: boolean // New prop to indicate if this is a saved article
   children?: React.ReactNode
 }
 
@@ -45,17 +47,20 @@ export interface ArticleCardProps {
  * PROPS:
  * - article: Article data object
  * - onClick: Click handler for navigation
+ * - isSaved: Boolean indicating if this is a saved article (draft)
  * - children: Optional custom content (overrides default structure)
  * 
  * USAGE:
  * <ArticleCard 
  *   article={articleData}
  *   onClick={() => navigate('/news/${article.slug}')}
+ *   isSaved={false}
  * />
  */
 export const ArticleCard: React.FC<ArticleCardProps> = ({ 
   article, 
   onClick,
+  isSaved = false,
   children 
 }) => {
   const handleClick = () => {
@@ -66,11 +71,22 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     ? article.content.substring(0, 150) + '...' 
     : 'Nội dung đang cập nhật...'
 
+  // Determine if article is saved based on status or prop
+  const isSavedArticle = isSaved || article.status === 'saved'
+
   return (
     <div 
-      className="news-card clickable"
+      className={`news-card clickable ${isSavedArticle ? 'saved-article' : ''}`}
       onClick={handleClick}
     >
+      {/* Saved Article Badge */}
+      {isSavedArticle && (
+        <div className="saved-badge">
+          <Save size={14} />
+          Đã lưu
+        </div>
+      )}
+
       {children || (
         <>
           {/* Card Header */}
@@ -91,7 +107,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               <Calendar size={16} />
             </div>
             <div className="publication-text">
-              <strong>Ngày đăng:</strong> {
+              <strong>{isSavedArticle ? 'Ngày lưu:' : 'Ngày đăng:'}</strong> {
                 article.createdAt 
                   ? (() => {
                       const date = article.createdAt

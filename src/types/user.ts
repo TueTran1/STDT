@@ -11,11 +11,10 @@ export interface User {
 }
 
 // User Creation Input Type
-// For creating new users with password
+// For creating new users (password handled by Firebase Auth)
 export interface CreateUserInput {
   displayName: string
   email: string
-  password: string
   role: 'admin' | 'editor' | 'user'
   isActive: boolean
 }

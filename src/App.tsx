@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { AdminRoute } from './components/AdminRoute'
+import { EditorRoute } from './components/EditorRoute'
 import { ProfileRoute } from './components/ProfileRoute'
 import { ScrollToTop } from './components/ScrollToTop'
 import { LoginPage } from './pages/LoginPage'
@@ -12,6 +13,7 @@ import { RegulationsPage } from './pages/RegulationsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import AdminDashboard from './pages/AdminDashboard'
 import { ArticlePage } from './pages/ArticlePage'
+import { ArticleEditorPage } from './pages/ArticleEditorPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { AccessDeniedPage } from './pages/AccessDeniedPage'
 
@@ -43,6 +45,28 @@ function App() {
               <ProfileRoute>
                 <ProfilePage />
               </ProfileRoute>
+            } />
+            
+            {/* Editor Only Routes */}
+            <Route path="/news/create" element={
+              <EditorRoute>
+                <ArticleEditorPage />
+              </EditorRoute>
+            } />
+            <Route path="/news/edit/:id" element={
+              <EditorRoute>
+                <ArticleEditorPage />
+              </EditorRoute>
+            } />
+            <Route path="/knowledge/create" element={
+              <EditorRoute>
+                <ArticleEditorPage />
+              </EditorRoute>
+            } />
+            <Route path="/knowledge/edit/:id" element={
+              <EditorRoute>
+                <ArticleEditorPage />
+              </EditorRoute>
             } />
             
             {/* Admin Only Routes */}

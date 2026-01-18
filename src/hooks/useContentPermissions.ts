@@ -1,68 +1,85 @@
 import { useAuth } from '../contexts/AuthContext'
-import type { NewsDocument, KnowledgeDocument } from '../types/firestore'
-import type { User } from '../types/user'
+import type { NewsDocument, KnowledgeDocument, TraditionDocument, NewsArticle, KnowledgeArticle } from '../types/firestore'
 
-type ContentDocument = NewsDocument | KnowledgeDocument
+type ContentDocument = NewsDocument | KnowledgeDocument | TraditionDocument | NewsArticle | KnowledgeArticle
 
 export interface ContentPermissions {
   canCreate: boolean
   canUpdate: boolean
   canDelete: boolean
-  canUpdateThis: (document: ContentDocument) => boolean
-  canDeleteThis: (document: ContentDocument) => boolean
+  isOwner: boolean
 }
 
-export const useContentPermissions = (): ContentPermissions => {
-  const { hasRole, user } = useAuth()
+/**
+ * Hook to check content permissions based on user role and document ownership
+ * 
+ * Permission Rules:
+ * - Editor: canCreate=true, canUpdate=true (own docs only), canDelete=false
+ * - Admin: canCreate=false, canUpdate=false, canDelete=true (any doc)
+ * - Unauthenticated: no permissions
+ */
+export const useContentPermission = (document?: ContentDocument): ContentPermissions => {
+  const { user, hasRole } = useAuth()
 
-  const canCreate = hasRole('editor')
-  const canUpdate = hasRole('editor')
+  // Check if user owns the document
+  const isOwner = document ? checkDocumentOwnership(document, user?.id) : false
+
+  // Permission logic based on role
+  const canCreate = hasRole('editor') && !hasRole('admin')
+  const canUpdate = hasRole('editor') && !hasRole('admin') && isOwner
   const canDelete = hasRole('admin')
 
-  const canUpdateThis = (_document: ContentDocument): boolean => {
-    // Editors can only update their own content
-    if (!hasRole('editor')) return false
-    return (user as User)?.id ? true : false // Simplified for now
-  }
-
-  const canDeleteThis = (_document: ContentDocument): boolean => {
-    // Admins can delete any content
-    return hasRole('admin')
-  }
-
   return {
     canCreate,
     canUpdate,
     canDelete,
-    canUpdateThis,
-    canDeleteThis
+    isOwner
   }
 }
 
-// Helper function for checking permissions without hook (for server-side logic)
-export const checkContentPermissions = (
-  userRole: 'admin' | 'editor' | null,
-  userUid: string | null,
-  document?: ContentDocument
-): ContentPermissions => {
-  const canCreate = userRole === 'editor'
-  const canUpdate = userRole === 'editor'
-  const canDelete = userRole === 'admin'
+/**
+ * Helper function to determine document ownership across different document types
+ */
+const checkDocumentOwnership = (document: ContentDocument, userId?: string): boolean => {
+  if (!userId || !document) return false
 
-  const canUpdateThis = (_doc: ContentDocument): boolean => {
-    if (userRole !== 'editor' || !userUid) return false
-    return true // Simplified for now
+  // Check BaseDocument createdBy field (common to all documents)
+  if (document.createdBy) {
+    return document.createdBy === userId
   }
 
-  const canDeleteThis = (_doc: ContentDocument): boolean => {
-    return userRole === 'admin'
+  // Type guards for specific document types
+  const isNewsDocument = (doc: ContentDocument): doc is NewsDocument | NewsArticle => {
+    return 'author' in doc && 'excerpt' in doc && ('category' in doc && typeof doc.category === 'string' && 
+      ['announcement', 'event', 'update', 'general'].includes(doc.category))
   }
 
-  return {
-    canCreate,
-    canUpdate,
-    canDelete,
-    canUpdateThis: (document: ContentDocument) => canUpdateThis(document),
-    canDeleteThis: (document: ContentDocument) => canDeleteThis(document)
+  const isKnowledgeDocument = (doc: ContentDocument): doc is KnowledgeDocument | KnowledgeArticle => {
+    return 'author' in doc && 'summary' in doc && ('category' in doc && typeof doc.category === 'string' && 
+      ['quan-su', 'chinh-tri', 'hau-can', 'ky-thuat'].includes(doc.category))
   }
+
+  const isTraditionDocument = (doc: ContentDocument): doc is TraditionDocument => {
+    return 'contributor' in doc && 'origin' in doc
+  }
+
+  // Check NewsDocument author.uid field
+  if (isNewsDocument(document) && document.author?.uid) {
+    return document.author.uid === userId
+  }
+
+  // Check KnowledgeDocument author.uid field
+  if (isKnowledgeDocument(document) && document.author?.uid) {
+    return document.author.uid === userId
+  }
+
+  // Check TraditionDocument contributor.uid field
+  if (isTraditionDocument(document) && document.contributor?.uid) {
+    return document.contributor.uid === userId
+  }
+
+  return false
 }
+
+// Legacy export for backward compatibility
+export const useContentPermissions = useContentPermission

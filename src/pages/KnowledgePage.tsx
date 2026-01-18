@@ -1,16 +1,21 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { useKnowledge } from '../hooks/useFirestore'
-import {
-  ArticleCard,
+import { 
+  getPublishedArticles, 
+  getSavedArticles,
+  type ContentType 
+} from '../services/contentService'
+import { 
+  ArticleCard, 
   type Article,
-  KnowledgeSectionSelector,
-  type KnowledgeSection,
-  LoadingState,
-  ErrorState,
+  LoadingState, 
+  ErrorState, 
   EmptyState
 } from '../components/ui'
 import { MilitaryPageLayout } from '../components/layout'
+import { BookOpen, Plus, Save } from 'lucide-react'
 import quanSuImage from '../assets/quan-su.png'
 import hauCanImage from '../assets/hau-can.png'
 import kyThuatImage from '../assets/ky-thuat.png'
@@ -25,106 +30,135 @@ const SECTIONS: KnowledgeSection[] = [
 
 export const KnowledgePage: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   
-  // State for selected section - null means show all sections
-  const [selectedSection, setSelectedSection] = useState<string | null>(null)
+  // State for toggle between published and saved articles
+  const [showSaved, setShowSaved] = useState(false)
   
-  // Fetch knowledge articles based on selected sections
-  const { data: knowledge, loading, error, refetch } = useKnowledge()
-
-  // Filter articles based on selected section and map to Article type
-  // If selectedSection === null → show ALL articles
-  // Else → show ONLY articles where article.category === selectedSection
-  const filteredKnowledge = knowledge?.filter(article => {
-    if (selectedSection === null) {
-      return true // Show all articles
-    } else {
-      return article.category === selectedSection // Show only selected section
-    }
-  }).map(doc => ({
-    id: doc.id,
-    title: doc.title,
-    content: doc.summary,
-    category: doc.category,
-    author: { displayName: doc.author.displayName },
-    createdAt: (() => {
-      const date = doc.createdAt
-      if (date && typeof date === 'object' && 'toDate' in date && typeof (date as any).toDate === 'function') {
-        return (date as any).toDate().toISOString()
-      } else if (date instanceof Date) {
-        return date.toISOString()
-      } else if (typeof date === 'string') {
-        return new Date(date).toISOString()
-      }
-      return new Date().toISOString()
-    })(),
-    tags: doc.tags,
-    image: doc.media?.images?.[0] || null, // Safe access with fallback
-    views: 0, // Default to 0 since views field doesn't exist
-    updatedAt: (() => {
-      const date = doc.updatedAt
-      if (date && typeof date === 'object' && 'toDate' in date && typeof (date as any).toDate === 'function') {
-        return (date as any).toDate().toISOString()
-      } else if (date instanceof Date) {
-        return date.toISOString()
-      } else if (typeof date === 'string') {
-        return new Date(date).toISOString()
-      }
-      return new Date().toISOString()
-    })(),
-    slug: doc.slug
-  })) || []
-
-  // Simple section selection logic - toggle back to null when same section clicked
-  const onSectionSelect = (sectionId: string) => {
-    if (selectedSection === sectionId) {
-      // If clicking the same section, reset to null (show all)
-      setSelectedSection(null)
-    } else {
-      // If clicking different section or no section selected, set to new section
-      setSelectedSection(sectionId)
+  // Fetch published articles
+  const { data: publishedKnowledge, loading: publishedLoading, error: publishedError, refetch: refetchPublished } = useKnowledge()
+  
+  // Fetch saved articles (only when toggle is active)
+  const [savedKnowledge, setSavedKnowledge] = useState<Article[]>([])
+  const [savedLoading, setSavedLoading] = useState(false)
+  const [savedError, setSavedError] = useState<string | null>(null)
+  
+  // Load saved articles when toggle is active
+  const loadSavedArticles = async () => {
+    if (!user) return
+    
+    try {
+      setSavedLoading(true)
+      setSavedError(null)
+      
+      const savedArticles = await getSavedArticles('knowledge', user.id)
+      setSavedKnowledge(savedArticles)
+    } catch (err) {
+      setSavedError(err instanceof Error ? err.message : 'Lỗi khi tải bài viết đã lưu')
+    } finally {
+      setSavedLoading(false)
     }
   }
-
+  
+  // Toggle between published and saved articles
+  const handleToggleView = () => {
+    const newShowSaved = !showSaved
+    setShowSaved(newShowSaved)
+    
+    if (newShowSaved) {
+      loadSavedArticles()
+    }
+  }
+  
   // Handle article click
   const handleArticleClick = (article: Article) => {
-    navigate(`/knowledge/${article.slug}`)
+    if (showSaved) {
+      // Saved articles: navigate to edit page
+      navigate(`/knowledge/edit/${article.id}`)
+    } else {
+      // Published articles: navigate to public view
+      navigate(`/knowledge/${article.slug}`)
+    }
   }
-
+  
+  // Handle create new article
+  const handleCreateNew = () => {
+    navigate('/knowledge/create')
+  }
+  
+  // Determine which data to display
+  const displayData = showSaved ? savedKnowledge : publishedKnowledge
+  const displayLoading = showSaved ? savedLoading : publishedLoading
+  const displayError = showSaved ? savedError : publishedError
+  const handleRefetch = showSaved ? loadSavedArticles : refetchPublished
+  
+  // Check if user is editor (for create button)
+  const isEditor = user?.role === 'editor'
+  
   return (
     <MilitaryPageLayout 
       title={<h2>KIẾN THỨC TỔNG HỢP</h2>}
-      subtitle="Nền tảng kiến thức quân sự toàn diện"
+      subtitle={showSaved ? "Bài viết đã lưu của bạn" : "Nền tảng kiến thức quân sự toàn diện"}
     >
+      {/* Action Bar */}
+      <div className="page-actions">
+        <div className="action-buttons">
+          {isEditor && (
+            <button 
+              onClick={handleCreateNew}
+              className="create-button"
+            >
+              <Plus size={16} />
+              Tạo mới
+            </button>
+          )}
+          
+          <button 
+            onClick={handleToggleView}
+            className={`toggle-button ${showSaved ? 'active' : ''}`}
+          >
+            <Save size={16} />
+            {showSaved ? 'Hiện thị đã xuất bản' : 'Bài đã lưu'}
+          </button>
+        </div>
+        
+        <div className="view-indicator">
+          <span className={`indicator ${showSaved ? 'saved' : 'published'}`}>
+            {showSaved ? 'ĐANG HIỂN THỊ CÁC BÀI VIẾT ĐÃ LƯU' : 'ĐANG HIỂN THỊ CÁC BÀI XUẤT BẢN'}
+          </span>
+        </div>
+      </div>
+
       {/* Section Selection */}
       <KnowledgeSectionSelector
         sections={SECTIONS}
-        selectedSection={selectedSection}
-        onSectionSelect={onSectionSelect}
+        selectedSection={null}
+        onSectionSelect={() => {}} // Disabled when showing saved articles
       />
 
       {/* Knowledge Content */}
       <div className="knowledge-content">
-        {loading ? (
+        {displayLoading ? (
           <LoadingState message="Đang tải kiến thức..." />
-        ) : error ? (
+        ) : displayError ? (
           <ErrorState 
-            message={error}
-            onRetry={refetch}
+            message={displayError}
+            onRetry={handleRefetch}
           />
-        ) : filteredKnowledge.length === 0 ? (
+        ) : displayData.length === 0 ? (
           <EmptyState
-            icon="📚"
-            title="CHƯA CÓ KIẾN THỨC"
-            message="Chưa có kiến thức cho các ngành đã chọn."
+            icon={<BookOpen size={48} />}
+            title={showSaved ? "CHƯA CÓ BÀI VIẾT ĐÃ LƯU" : "CHƯA CÓ KIẾN THỨC"}
+            message={showSaved ? "Bạn chưa có bài viết nào đã lưu." : "Chưa có kiến thức cho các ngành đã chọn."}
           />
         ) : (
           <div className="knowledge-grid">
-            {filteredKnowledge.map((article: Article) => (
+            {displayData.map((article: Article) => (
               <ArticleCard
                 key={article.id}
                 article={article}
                 onClick={handleArticleClick}
+                isSaved={showSaved}
               />
             ))}
           </div>

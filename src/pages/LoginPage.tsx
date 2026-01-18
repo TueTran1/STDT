@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { HomeButton } from '../components/ui'
+import { PasswordResetDialog } from '../components/auth/PasswordResetDialog'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const { login, user } = useAuth()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
 
   // Redirect if already logged in
   useEffect(() => {
@@ -27,7 +29,7 @@ export const LoginPage: React.FC = () => {
     setError('')
 
     try {
-      await login(username, password)
+      await login(email, password)
       
       // Redirect will be handled by the useEffect that watches for user changes
       // The onAuthStateChanged listener will update the user state
@@ -47,14 +49,14 @@ export const LoginPage: React.FC = () => {
         
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Tên đăng nhập</label>
+            <label htmlFor="email">Email</label>
             <input
-              id="username"
-              type="text"
+              id="email"
+              type="email"
               required
-              placeholder="Nhập tên đăng nhập"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Nhập email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
             />
           </div>
@@ -75,6 +77,17 @@ export const LoginPage: React.FC = () => {
           {error && (
             <div className="text-red-600 text-sm text-center p-3 bg-red-50 rounded-lg border border-red-200">
               {error}
+              {error.includes('INVALID_CREDENTIALS') && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordReset(true)}
+                    className="text-blue-600 hover:text-blue-800 underline text-xs"
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -91,6 +104,12 @@ export const LoginPage: React.FC = () => {
           <HomeButton variant="text" />
         </div>
       </div>
+
+      <PasswordResetDialog
+        isOpen={showPasswordReset}
+        onClose={() => setShowPasswordReset(false)}
+        email={email}
+      />
     </div>
   )
 }

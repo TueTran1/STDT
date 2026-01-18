@@ -2181,6 +2181,34 @@
   border-color: #ffed4e;
 }
 
+/* Saved Article Badge */
+.saved-article {
+  position: relative;
+}
+
+.saved-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--military-red);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.saved-article .news-card-content {
+  padding-right: 80px; /* Make space for badge */
+}
+
 /* Notifications Page Styles */
 .notifications-page {
   min-height: 100vh;

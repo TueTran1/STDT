@@ -10,6 +10,78 @@ export interface BaseDocument {
 // User roles
 export type UserRole =  'admin' | 'editor' 
 
+// Shared base interface for articles (News and Knowledge)
+export interface BaseArticle {
+  id?: string
+  title: string
+  slug: string
+  content: string
+  excerpt?: string
+  tags: string[]
+  featured: boolean
+  status: 'saved' | 'published' | 'draft' | 'archived' // Extended for backward compatibility
+  createdAt: Date
+  createdBy: string
+  updatedAt: Date
+  updatedBy: string
+  author: {
+    uid: string
+    displayName: string
+    photoURL?: string
+  }
+}
+
+// Extended News Article interface (backward compatible with NewsDocument)
+export interface NewsArticle extends BaseArticle {
+  // News-specific fields
+  category: 'announcement' | 'event' | 'update' | 'general'
+  publishedAt?: Date
+  coverImage?: string // Storage URL
+  readingTime: number // Estimated minutes
+  viewCount: number
+  metadata: {
+    seoTitle?: string
+    seoDescription?: string
+    keywords?: string[]
+  }
+  
+  // Legacy compatibility fields
+  excerpt: string // Required for NewsDocument compatibility
+}
+
+// Extended Knowledge Article interface (backward compatible with KnowledgeDocument)
+export interface KnowledgeArticle extends BaseArticle {
+  // Knowledge-specific fields
+  category: 'quan-su' | 'chinh-tri' | 'hau-can' | 'ky-thuat'
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  summary: string // Required for knowledge articles
+  estimatedTime: number // Minutes to read/complete
+  engagement: {
+    views: number
+    likes: number
+    shares: number
+    bookmarks: number
+  }
+  
+  // Additional knowledge fields for full compatibility
+  type: 'article' | 'tutorial' | 'guide' | 'fact' | 'story'
+  subcategory: string
+  media: {
+    images: string[]
+    videos: string[]
+    documents?: string[] // PDFs or other files
+  }
+  prerequisites: string[] // IDs of related knowledge documents
+  relatedKnowledge: string[] // IDs of related knowledge documents
+  review: {
+    isReviewed: boolean
+    reviewedBy?: string // uid of expert who reviewed
+    reviewedAt?: Date
+    rating?: number // 1-5 stars
+    feedback?: string
+  }
+} 
+
 // Users Collection
 export interface UserDocument extends BaseDocument {
   uid: string // Firebase Auth UID
@@ -20,7 +92,6 @@ export interface UserDocument extends BaseDocument {
   role: UserRole
   isActive: boolean
   lastLoginAt?: Date
-  passwordHash?: string
   profile: {
     bio?: string
     location?: string

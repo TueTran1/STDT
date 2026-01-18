@@ -357,8 +357,7 @@ const AdminDashboard: React.FC = () => {
       const usersData = await getUsers()
       const mappedUsers = usersData.map(mapUserDocumentToMappedUser)
       setUsers(mappedUsers)
-    } catch (err) {
-      console.error('Error loading users:', err)
+    } catch (error) {
       setError('Không thể tải danh sách người dùng')
     } finally {
       setLoading(false)
@@ -399,8 +398,7 @@ const AdminDashboard: React.FC = () => {
       // Here you would implement the actual actions
       // For now, we'll just reload the users list
       await loadUsers()
-    } catch (err) {
-      console.error('Error executing action:', err)
+    } catch (error) {
       setError('Không thể thực hiện hành động')
     } finally {
       setPendingAction(null)
@@ -466,7 +464,7 @@ const AdminDashboard: React.FC = () => {
             <div className="flex justify-between items-center py-6">
               <div>
                 <h1 className="text-2xl font-bold text-red-800">Bảng điều khiển quản trị</h1>
-                <p className="text-gray-600 mt-1">Chào mừng, {user?.username}</p>
+                <p className="text-gray-600 mt-1">Chào mừng, {user?.displayName}</p>
               </div>
               <button
                 onClick={() => setCreateUserDialogOpen(true)}

@@ -50,8 +50,8 @@ export const useFirestore = <T extends { id: string }>(
 // Specific hook for knowledge articles
 export const useKnowledge = (section?: string) => {
   const constraints = section 
-    ? [where('category', '==', section), orderBy('createdAt', 'desc')]
-    : [orderBy('createdAt', 'desc')]
+    ? [where('status', '==', 'published'), where('category', '==', section), orderBy('createdAt', 'desc')]
+    : [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
 
   return useFirestore<KnowledgeDocument>('knowledge', constraints)
 }
@@ -59,8 +59,8 @@ export const useKnowledge = (section?: string) => {
 // Specific hook for news articles
 export const useNews = (category?: string) => {
   const constraints = category 
-    ? [where('category', '==', category), orderBy('createdAt', 'desc')]
-    : [orderBy('createdAt', 'desc')]
+    ? [where('status', '==', 'published'), where('category', '==', category)]
+    : [where('status', '==', 'published')]
 
   return useFirestore<NewsDocument>('news', constraints)
 }
@@ -68,8 +68,8 @@ export const useNews = (category?: string) => {
 // Specific hook for traditions
 export const useTraditions = (category?: string) => {
   const constraints = category 
-    ? [where('category', '==', category), orderBy('createdAt', 'desc')]
-    : [orderBy('createdAt', 'desc')]
+    ? [where('status', '==', 'published'), where('category', '==', category), orderBy('createdAt', 'desc')]
+    : [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
 
   return useFirestore<TraditionDocument>('traditions', constraints)
 }
