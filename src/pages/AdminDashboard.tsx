@@ -62,17 +62,6 @@ type ChangeRoleDialogProps = {
   userName: string
 }
 
-type DashboardMetricProps = {
-  value: string | number
-  label: string
-  sublabel?: string
-}
-
-type DashboardCardProps = {
-  children: React.ReactNode
-  className?: string
-}
-
 // ========================================
 //   UTILITY FUNCTIONS
 // ========================================
@@ -135,12 +124,12 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, title, childre
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 border-2 border-yellow-600">
+      <div className="content-panel max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-red-800">{title}</h3>
+          <h3 className="text-xl font-bold text-primary">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-secondary hover:text-primary transition-colors"
           >
             <X size={20} />
           </button>
@@ -156,30 +145,30 @@ const ViewUserDialog: React.FC<ViewUserDialogProps> = ({ isOpen, onClose, user }
   <UserDialog isOpen={isOpen} onClose={onClose} title="Thông tin người dùng">
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên</label>
-        <p className="text-gray-900">{user.name}</p>
+        <label className="block text-sm font-bold text-primary mb-1">Họ tên</label>
+        <p className="text-primary font-semibold">{user.name}</p>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <p className="text-gray-900">{user.email}</p>
+        <label className="block text-sm font-bold text-primary mb-1">Email</label>
+        <p className="text-primary font-semibold">{user.email}</p>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
+        <label className="block text-sm font-bold text-primary mb-1">Vai trò</label>
         <RoleBadge role={user.role} />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+        <label className="block text-sm font-bold text-primary mb-1">Trạng thái</label>
         <StatusBadge status={user.status} />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tạo</label>
-        <p className="text-gray-900">{user.createdDate}</p>
+        <label className="block text-sm font-bold text-primary mb-1">Ngày tạo</label>
+        <p className="text-primary font-semibold">{user.createdDate}</p>
       </div>
     </div>
     <div className="mt-6 flex justify-end">
       <button
         onClick={onClose}
-        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+        className="px-4 py-2 bg-yellow-500 text-primary rounded-lg hover:bg-yellow-400 font-semibold transition-all"
       >
         Đóng
       </button>
@@ -198,17 +187,17 @@ const ConfirmActionDialog: React.FC<ConfirmActionDialogProps> = ({
   cancelText 
 }) => (
   <UserDialog isOpen={isOpen} onClose={onClose} title={title}>
-    <p className="text-gray-700 mb-6">{message}</p>
+    <p className="text-secondary mb-6">{message}</p>
     <div className="flex justify-end space-x-3">
       <button
         onClick={onClose}
-        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+        className="px-4 py-2 bg-yellow-500 text-primary rounded-lg hover:bg-yellow-400 font-semibold transition-all"
       >
         {cancelText}
       </button>
       <button
         onClick={onConfirm}
-        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+        className="military-button px-6 py-3"
       >
         {confirmText}
       </button>
@@ -233,8 +222,8 @@ const ChangeRoleDialog: React.FC<ChangeRoleDialogProps> = ({
 
   return (
     <UserDialog isOpen={isOpen} onClose={onClose} title="Thay đổi vai trò">
-      <p className="text-gray-700 mb-4">
-        Chọn vai trò mới cho: <span className="font-semibold">{userName}</span>
+      <p className="text-secondary mb-4">
+        Chọn vai trò mới cho: <span className="font-bold text-primary">{userName}</span>
       </p>
       <div className="space-y-2">
         {(['ADMIN', 'EDITOR'] as const).map(role => (
@@ -254,13 +243,13 @@ const ChangeRoleDialog: React.FC<ChangeRoleDialogProps> = ({
       <div className="mt-6 flex justify-end space-x-3">
         <button
           onClick={onClose}
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+          className="px-4 py-2 bg-yellow-500 text-primary rounded-lg hover:bg-yellow-400 font-semibold transition-all"
         >
           Hủy
         </button>
         <button
           onClick={handleConfirm}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          className="military-button px-6 py-3"
         >
           Cập nhật
         </button>
@@ -275,12 +264,12 @@ const ChangeRoleDialog: React.FC<ChangeRoleDialogProps> = ({
 
 const RoleBadge: React.FC<{ role: 'ADMIN' | 'EDITOR' }> = ({ role }) => {
   const styles = {
-    ADMIN: 'bg-red-100 text-red-800 border-red-200',
-    EDITOR: 'bg-blue-100 text-blue-800 border-blue-200'
+    ADMIN: 'bg-red-100 text-primary border-red-200',
+    EDITOR: 'bg-yellow-100 text-yellow-800 border-yellow-200'
   }
   
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[role]}`}>
+    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${styles[role]}`}>
       {role === 'ADMIN' ? 'Quản trị viên' : 'Biên tập viên'}
     </span>
   )
@@ -289,35 +278,15 @@ const RoleBadge: React.FC<{ role: 'ADMIN' | 'EDITOR' }> = ({ role }) => {
 const StatusBadge: React.FC<{ status: 'ACTIVE' | 'LOCKED' }> = ({ status }) => {
   const styles = {
     ACTIVE: 'bg-green-100 text-green-800 border-green-200',
-    LOCKED: 'bg-red-100 text-red-800 border-red-200'
+    LOCKED: 'bg-red-100 text-primary border-red-200'
   }
   
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[status]}`}>
+    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${styles[status]}`}>
       {status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
     </span>
   )
 }
-
-// ========================================
-//   DASHBOARD COMPONENTS
-// ========================================
-
-// Dashboard Card - Base container for all dashboard elements
-const DashboardCard: React.FC<DashboardCardProps> = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-lg shadow-md p-6 border border-gray-200 ${className}`}>
-    {children}
-  </div>
-)
-
-// Dashboard Metric - Individual metric display
-const DashboardMetric: React.FC<DashboardMetricProps> = ({ value, label, sublabel }) => (
-  <DashboardCard>
-    <div className="text-3xl font-bold text-red-800 mb-2">{value}</div>
-    <div className="text-sm font-medium text-gray-600">{label}</div>
-    {sublabel && <div className="text-xs text-gray-500 mt-1">{sublabel}</div>}
-  </DashboardCard>
-)
 
 // ========================================
 //   MAIN DASHBOARD COMPONENT
@@ -426,10 +395,10 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <RequireAdmin>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-800 mx-auto mb-4"></div>
-            <p className="text-gray-600">Đang tải dữ liệu...</p>
+        <div className="min-h-screen" style={{backgroundColor: 'var(--beige-background)'}}>
+          <div className="content-panel text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-yellow-600 mx-auto mb-4"></div>
+            <p className="text-secondary">Đang tải dữ liệu...</p>
           </div>
         </div>
       </RequireAdmin>
@@ -439,13 +408,13 @@ const AdminDashboard: React.FC = () => {
   if (error) {
     return (
       <RequireAdmin>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-red-600 mb-4">⚠️</div>
-            <p className="text-gray-600 mb-4">{error}</p>
+        <div className="min-h-screen" style={{backgroundColor: 'var(--beige-background)'}}>
+          <div className="content-panel text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <p className="text-secondary mb-4">{error}</p>
             <button
               onClick={loadUsers}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="military-button px-6 py-3"
             >
               Thử lại
             </button>
@@ -457,103 +426,113 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <RequireAdmin>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen" style={{backgroundColor: 'var(--beige-background)'}}>
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-6">
-              <div>
-                <h1 className="text-2xl font-bold text-red-800">Bảng điều khiển quản trị</h1>
-                <p className="text-gray-600 mt-1">Chào mừng, {user?.displayName}</p>
-              </div>
-              <button
-                onClick={() => setCreateUserDialogOpen(true)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2"
-              >
-                <Users size={20} />
-                <span>Thêm người dùng</span>
-              </button>
+        <div className="content-panel mb-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-primary mb-2">Bảng điều khiển quản trị</h1>
+              <p className="text-secondary">Chào mừng, {user?.displayName}</p>
             </div>
+            <button
+              onClick={() => setCreateUserDialogOpen(true)}
+              className="military-button hover:bg-red-800 flex items-center space-x-2 px-6 py-3"
+            >
+              <Users size={20} />
+              <span>Thêm người dùng</span>
+            </button>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="main-container">
           {/* Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <DashboardMetric value={totalUsers} label="Tổng số người dùng" />
-            <DashboardMetric value={activeUsers} label="Người dùng hoạt động" />
-            <DashboardMetric value={adminUsers} label="Quản trị viên" />
-            <DashboardMetric value={editorUsers} label="Biên tập viên" />
+            <div className="metric-card">
+              <div className="metric-number">{totalUsers}</div>
+              <div className="metric-label">Tổng số người dùng</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-number">{activeUsers}</div>
+              <div className="metric-label">Người dùng hoạt động</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-number">{adminUsers}</div>
+              <div className="metric-label">Quản trị viên</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-number">{editorUsers}</div>
+              <div className="metric-label">Biên tập viên</div>
+            </div>
           </div>
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <DashboardCard>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Phân phối vai trò</h3>
+            <div className="content-panel">
+              <h3 className="text-xl font-bold text-primary mb-4">Phân phối vai trò</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={roleData}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#dc2626" />
+                  <Bar dataKey="count" fill="#d32f2f" />
                 </BarChart>
               </ResponsiveContainer>
-            </DashboardCard>
+            </div>
 
-            <DashboardCard>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Trạng thái người dùng</h3>
+            <div className="content-panel">
+              <h3 className="text-xl font-bold text-primary mb-4">Trạng thái người dùng</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={statusData}>
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#16a34a" />
+                  <Bar dataKey="count" fill="#ffd700" />
                 </BarChart>
               </ResponsiveContainer>
-            </DashboardCard>
+            </div>
           </div>
 
           {/* Users Table */}
-          <DashboardCard>
+          <div className="content-panel">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">Danh sách người dùng</h3>
+              <h3 className="text-xl font-bold text-primary">Danh sách người dùng</h3>
               <button
                 onClick={loadUsers}
-                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                className="px-4 py-2 text-sm bg-yellow-500 text-red-900 rounded-lg hover:bg-yellow-400 font-semibold transition-all"
               >
                 Làm mới
               </button>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="border-b-2 border-yellow-600">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-primary uppercase tracking-wider">
                       Người dùng
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-primary uppercase tracking-wider">
                       Vai trò
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-primary uppercase tracking-wider">
                       Trạng thái
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-primary uppercase tracking-wider">
                       Ngày tạo
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-bold text-primary uppercase tracking-wider">
                       Thao tác
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
+                <tbody>
+                  {users.map((user, index) => (
+                    <tr key={user.id} className={`border-b border-yellow-300 ${index % 2 === 0 ? 'bg-red-50' : 'bg-white'} hover:bg-yellow-50 transition-colors`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm font-bold text-primary">{user.name}</div>
+                          <div className="text-sm text-secondary">{user.email}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -562,32 +541,32 @@ const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={user.status} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary">
                         {user.createdDate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleViewUser(user)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 font-semibold"
                           >
                             Xem
                           </button>
                           <button
                             onClick={() => handleChangeRole(user)}
-                            className="text-yellow-600 hover:text-yellow-900"
+                            className="text-yellow-600 hover:text-yellow-900 font-semibold"
                           >
                             Vai trò
                           </button>
                           <button
                             onClick={() => handleToggleUserStatus(user.id)}
-                            className="text-orange-600 hover:text-orange-900"
+                            className="text-orange-600 hover:text-orange-900 font-semibold"
                           >
                             {user.isActive ? 'Khóa' : 'Mở'}
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 font-semibold"
                           >
                             Xóa
                           </button>
@@ -598,7 +577,7 @@ const AdminDashboard: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </DashboardCard>
+          </div>
         </div>
 
         {/* Dialogs */}

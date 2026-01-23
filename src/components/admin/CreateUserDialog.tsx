@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
-import { createUserSecure, type CreateUserRequest, type CreateUserResponse } from '../../services/secureUserService'
+import { createUserClient, type CreateUserRequest, type CreateUserResponse } from '../../services/clientUserService'
 import { useAuth } from '../../contexts/AuthContext'
 
 // Define types locally to avoid import issues
@@ -74,8 +74,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         isActive: formData.isActive
       }
 
-      const result = await createUserSecure(createUserRequest)
-      const response = result.data as CreateUserResponse
+      const response = await createUserClient(createUserRequest)
 
       if (response.success) {
         // User created successfully
@@ -102,16 +101,15 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
         setError(response.message || 'Failed to create user')
       }
     } catch (err: any) {
-            
-      // Handle Cloud Function errors
-      if (err.code === 'unavailable' || err.code === 'deadline-exceeded') {
-        setError('Lỗi mạng. Vui lòng thử lại sau.')
-      } else if (err.code === 'permission-denied') {
-        setError('Bạn không có quyền thực hiện thao tác này.')
-      } else if (err.code === 'already-exists') {
+      // Handle client-side auth errors
+      if (err.code === 'auth/email-already-in-use') {
         setError('Email này đã được sử dụng. Vui lòng chọn email khác.')
-      } else if (err.code === 'invalid-argument') {
-        setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.')
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Email không hợp lệ.')
+      } else if (err.code === 'auth/weak-password') {
+        setError('Mật khẩu quá yếu.')
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Quá nhiều yêu cầu. Vui lòng thử lại sau.')
       } else {
         setError(err.message || 'Failed to create user')
       }
@@ -130,8 +128,33 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 border-2 border-yellow-600">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999
+      }}
+    >
+      <div 
+        className="bg-white rounded-lg p-6 max-w-md w-full mx-4 border-2 border-yellow-600"
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '24px',
+          maxWidth: '448px',
+          width: '100%',
+          margin: '0 16px',
+          border: '2px solid #ffd700'
+        }}
+      >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-red-800">Tạo người dùng mới</h3>
           <button
@@ -144,7 +167,7 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-primary mb-1">
               Họ tên
             </label>
             <input
@@ -152,32 +175,32 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
               required
               value={formData.displayName}
               onChange={(e) => handleInputChange('displayName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-yellow-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent bg-white"
               placeholder="Nhập họ tên"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-primary mb-1">
               Email
             </label>
             <input
               required
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-yellow-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent bg-white"
               placeholder="nhập email"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-bold text-primary mb-1">
               Vai trò
             </label>
             <select
               value={formData.role}
               onChange={(e) => handleInputChange('role', e.target.value as 'admin' | 'editor')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
+              className="w-full px-3 py-2 border-2 border-yellow-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent bg-white"
             >
               <option value="editor">Editor</option>
               <option value="admin">Admin</option>
@@ -190,15 +213,15 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
               id="isActive"
               checked={formData.isActive}
               onChange={(e) => handleInputChange('isActive', e.target.checked)}
-              className="mr-2"
+              className="mr-2 w-4 h-4 text-red-600 border-yellow-600 rounded focus:ring-red-500"
             />
-            <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+            <label htmlFor="isActive" className="text-sm font-bold text-primary">
               Kích hoạt tài khoản
             </label>
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+            <div className="text-primary text-sm bg-red-50 p-2 rounded-lg border border-red-200">
               {error}
             </div>
           )}
@@ -207,14 +230,14 @@ export const CreateUserDialog: React.FC<CreateUserDialogProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+              className="px-4 py-2 bg-yellow-500 text-primary rounded-lg hover:bg-yellow-400 font-semibold transition-all"
               disabled={loading}
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              className="military-button px-6 py-3"
               disabled={loading}
             >
               {loading ? 'Đang tạo...' : 'Tạo người dùng'}

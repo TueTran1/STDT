@@ -38,12 +38,12 @@ export const ProfilePage: React.FC = () => {
           <div className="text-center">
             <div className="w-24 h-24 rounded-full mx-auto mb-4 bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center border-4 border-yellow-500">
               <span className="text-3xl font-bold text-red-900">
-                {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+                {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
               </span>
             </div>
             
             <h3 className="text-2xl font-bold text-dark mb-2">
-              {user?.username?.toUpperCase() || 'ĐỒNG CHÍ'}
+              {user?.displayName?.toUpperCase() || 'ĐỒNG CHÍ'}
             </h3>
             <p className="text-lg text-secondary mb-4">
               Quyền: {user?.role === 'admin' ? 'Quản trị viên' : 'Biên tập viên'}
@@ -53,11 +53,11 @@ export const ProfilePage: React.FC = () => {
           <div className="profile-details">
             <div className="detail-item">
               <span className="detail-label">ID người dùng:</span>
-              <span className="detail-value">{user?.id}</span>
+              <span className="detail-value">{user?.uid}</span>
             </div>
             <div className="detail-item">
               <span className="detail-label">Tên đăng nhập:</span>
-              <span className="detail-value">{user?.username}</span>
+              <span className="detail-value">{user?.displayName}</span>
             </div>
             <div className="detail-item">
               <span className="detail-label">Vai trò:</span>

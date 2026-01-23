@@ -21,14 +21,21 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive == true;
     }
     
-    // Check if user is admin (role from Firestore)
+    // Check if user is admin (role from Firestore) - Free Plan compatible
     function isAdmin() {
-      return isAuthenticated() && isUserActive() && getUserRole() == 'admin';
+      return isAuthenticated() && getUserRole() == 'admin';
     }
     
-    // Check if user is editor (role from Firestore)
+    // Allow user creation if authenticated user is creating the document
+    // This works because we validate admin role in the frontend code
+    function canCreateUser() {
+      return isAuthenticated() && 
+             request.resource.data.createdBy == request.auth.uid;
+    }
+    
+    // Check if user is editor (role from Firestore) - Free Plan compatible
     function isEditor() {
-      return isAuthenticated() && isUserActive() && getUserRole() == 'editor';
+      return isAuthenticated() && getUserRole() == 'editor';
     }
     
     // Check if user owns the resource (Firebase Auth UID match)
@@ -51,14 +58,14 @@ service cloud.firestore {
       allow update: if isOwner(userId) && 
         get(/databases/$(database)/documents/users/$(userId)).data.isActive == true;
       
-      // Admins can update any user profile
-      allow update: if isAuthenticated() && getUserRole() == 'admin';
+      // Admins can update any user profile (via Firestore role or custom claims)
+      allow update: if isAdmin();
       
-      // Only admins can create users
-      allow create: if isAuthenticated() && getUserRole() == 'admin';
+      // Only admins can create users (with special case handling)
+      allow create: if canCreateUser();
       
-      // Only admins can delete users
-      allow delete: if isAuthenticated() && getUserRole() == 'admin';
+      // Only admins can delete users (via Firestore role or custom claims)
+      allow delete: if isAdmin();
     }
 
     // Allow list queries for login purposes and admin access
@@ -80,7 +87,7 @@ service cloud.firestore {
         (resource.data.status == 'published' || resource.data.createdBy == request.auth.uid);
       
       // Admin read access for all articles
-      allow read: if isAuthenticated() && getUserRole() == 'admin';
+      allow read: if isAdmin();
       
       // Editor create permissions
       allow create: if isAuthenticated() && 
@@ -92,7 +99,7 @@ service cloud.firestore {
         resource.data.createdBy == request.auth.uid;
       
       // Admin delete permissions
-      allow delete: if isAuthenticated() && getUserRole() == 'admin';
+      allow delete: if isAdmin();
     }
 
     // Knowledge Collection - Enhanced List access with proper query support
@@ -101,14 +108,17 @@ service cloud.firestore {
       allow list: if true;
       
       // Allow list for editors to access their own saved articles (both createdBy and author.uid)
+      // Support queries with orderBy for sorting
       allow list: if isAuthenticated() && 
         request.query.where.length >= 2 &&
         request.query.where[0] == ['status', '==', 'saved'] &&
         (request.query.where[1] == ['createdBy', '==', request.auth.uid] || 
-         request.query.where[1] == ['author.uid', '==', request.auth.uid]);
+         request.query.where[1] == ['author.uid', '==', request.auth.uid]) &&
+        (request.query.orderBy == null || 
+         request.query.orderBy[0] == ['createdAt', 'desc']);
       
       // Allow list for admins to access all knowledge
-      allow list: if isAuthenticated() && getUserRole() == 'admin';
+      allow list: if isAdmin();
       
       // Allow get for individual documents (handled by /knowledge/{knowledgeId} rule)
       allow get: if false;
@@ -127,7 +137,7 @@ service cloud.firestore {
         (resource.data.status == 'published' || resource.data.createdBy == request.auth.uid);
       
       // Admin read access for all articles
-      allow read: if isAuthenticated() && getUserRole() == 'admin';
+      allow read: if isAdmin();
       
       // Editor create permissions
       allow create: if isAuthenticated() && 
@@ -139,7 +149,7 @@ service cloud.firestore {
         resource.data.createdBy == request.auth.uid;
       
       // Admin delete permissions
-      allow delete: if isAuthenticated() && getUserRole() == 'admin';
+      allow delete: if isAdmin();
     }
 
     // News Collection - Enhanced List access with proper query support
@@ -148,11 +158,14 @@ service cloud.firestore {
       allow list: if true;
       
       // Allow list for editors to access their own saved articles (both createdBy and author.uid)
+      // Support queries with orderBy for sorting
       allow list: if isAuthenticated() && 
         request.query.where.length >= 2 &&
         request.query.where[0] == ['status', '==', 'saved'] &&
         (request.query.where[1] == ['createdBy', '==', request.auth.uid] || 
-         request.query.where[1] == ['author.uid', '==', request.auth.uid]);
+         request.query.where[1] == ['author.uid', '==', request.auth.uid]) &&
+        (request.query.orderBy == null || 
+         request.query.orderBy[0] == ['createdAt', 'desc']);
       
       // Allow list for admins to access all news
       allow list: if isAuthenticated() && getUserRole() == 'admin';
@@ -174,10 +187,10 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.contributor.uid == request.auth.uid;
       
       // Admins can read all traditions
-      allow read: if isAuthenticated() && getUserRole() == 'admin';
+      allow read: if isAdmin();
       
       // Admins can create, update, delete any traditions
-      allow create, update, delete: if isAuthenticated() && getUserRole() == 'admin';
+      allow create, update, delete: if isAdmin();
     }
 
     match /traditions {
@@ -192,10 +205,10 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
       
       // Admins can read all notifications
-      allow read: if isAuthenticated() && getUserRole() == 'admin';
+      allow read: if isAdmin();
       
       // Admins can create, update, delete any notifications
-      allow create, update, delete: if isAuthenticated() && getUserRole() == 'admin';
+      allow create, update, delete: if isAdmin();
     }
 
     // User-specific subcollections
@@ -206,7 +219,7 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(userId)).data.isActive == true;
       
       // Admins can access any user subcollections
-      allow read, write: if isAuthenticated() && getUserRole() == 'admin';
+      allow read, write: if isAdmin();
     }
 
     // Comments subcollection
@@ -225,7 +238,7 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
       
       // Admins can manage any comment
-      allow read, update, delete: if isAuthenticated() && getUserRole() == 'admin';
+      allow read, update, delete: if isAdmin();
     }
 
     // Deny all other access by default

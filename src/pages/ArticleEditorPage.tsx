@@ -8,7 +8,7 @@ import {
   updateArticle,
   type ContentType 
 } from '../services/contentService'
-import { useAuthDebug, logAuthDebug, checkFirestoreUserDocument } from '../utils/debugAuth'
+import { checkFirestoreUserDocument } from '../utils/debugAuth'
 import { MilitaryPageLayout } from '../components/layout'
 import { LoadingState, ErrorState } from '../components/ui'
 import { ArrowLeft, Save, Eye, AlertTriangle } from 'lucide-react'
@@ -51,9 +51,6 @@ export const ArticleEditorPage: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPreview, setIsPreview] = useState(false)
-  
-  // Debug authentication state - after article state is declared
-  const debugInfo = useAuthDebug(article)
   
   // Autosave state
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -273,9 +270,6 @@ export const ArticleEditorPage: React.FC = () => {
       return
     }
     
-    // Debug authentication state
-    logAuthDebug(debugInfo, `ArticleEditor Save - ${contentType}`)
-    
     // Check if user document exists in Firestore
     if (user?.uid) {
       const userDocCheck = await checkFirestoreUserDocument(user.uid)
@@ -424,7 +418,7 @@ export const ArticleEditorPage: React.FC = () => {
       },
       readingTime: calculateReadingTime(content),
       estimatedTime: calculateReadingTime(content),
-      createdAt: article?.createdAt || now,
+      createdAt: article?.createdAt?.toDate?.() || now,
       updatedAt: now
     }
   }

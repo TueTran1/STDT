@@ -370,25 +370,29 @@ export const getSavedArticles = async (
         constraints.push(limitFn(options.limit))
       }
       
-      const articlesQuery = query(collectionRef, ...constraints)
-      const querySnapshot = await getDocs(articlesQuery)
-      
-      return querySnapshot.docs.map((doc: QueryDocumentSnapshot) => {
-        const data = doc.data()
-        return {
-          ...data,
-          id: doc.id,
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-          updatedAt: data.updatedAt?.toDate?.() || new Date()
-        } as Article
-      })
+      try {
+        const articlesQuery = query(collectionRef, ...constraints)
+        const querySnapshot = await getDocs(articlesQuery)
+        
+        return querySnapshot.docs.map((doc: QueryDocumentSnapshot) => {
+          const data = doc.data()
+          return {
+            ...data,
+            id: doc.id,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            updatedAt: data.updatedAt?.toDate?.() || new Date()
+          } as Article
+        })
+      } catch (fallbackError) {
+        throw fallbackError
+      }
     }
   } catch (error) {
     // Surface auth errors clearly to UI - do not catch silently
     
     // Re-throw permission errors for UI handling
     if (error instanceof Error && error.message.includes('permission-denied')) {
-      throw new Error(`Permission denied: You don't have access to saved articles. Please ensure you're logged in and your account is active.`)
+      throw new Error(`Missing or insufficient permissions. This may be due to article ownership mismatch. Please ensure the article's createdBy and author.uid fields match your user ID (${userId}).`)
     }
     
     // Re-throw auth errors for UI handling

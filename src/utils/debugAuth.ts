@@ -41,12 +41,6 @@ export const useAuthDebug = (document?: any): DebugInfo => {
 }
 
 /**
- * Log debug information to console
- */
-export const logAuthDebug = (_debugInfo: DebugInfo, _operation: string) => {
-}
-
-/**
  * Check if user exists in Firestore with proper structure
  */
 export const checkFirestoreUserDocument = async (userId: string): Promise<{
@@ -142,4 +136,40 @@ export const validateFirestoreRequirements = (userData: any, articleData: any): 
   }
   
   return errors
+}
+
+/**
+ * Fix article ownership by updating createdBy and author.uid to match current user
+ * This resolves permission issues when article ownership doesn't match the current user
+ */
+export const fixArticleOwnership = async (
+  articleId: string, 
+  articleType: 'news' | 'knowledge',
+  currentUserId: string,
+  currentUserDisplayName: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { doc, updateDoc } = await import('firebase/firestore')
+    const { db } = await import('../lib/firebase')
+    
+    const articleRef = doc(db, articleType, articleId)
+    
+    // Update the article with current user's ownership
+    await updateDoc(articleRef, {
+      createdBy: currentUserId,
+      updatedBy: currentUserId,
+      author: {
+        uid: currentUserId,
+        displayName: currentUserDisplayName
+      },
+      updatedAt: new Date()
+    })
+    
+    return { success: true }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error fixing article ownership'
+    }
+  }
 }
