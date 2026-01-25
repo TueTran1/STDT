@@ -1,6 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { MilitaryPageLayout } from '../components/layout'
+import { User } from 'lucide-react'
 import quanHieuImage from '../assets/quan-hieu.png'
 import quyetThangImage from '../assets/quyet-thang.png'
 import tinTucImage from '../assets/tin-tuc.png'
@@ -8,6 +10,7 @@ import kienThucImage from '../assets/kien-thuc.png'
 
 export const HomeScreen: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   
   const handleRegulationsClick = () => {
     navigate('/regulations')
@@ -25,10 +28,28 @@ export const HomeScreen: React.FC = () => {
     navigate('/knowledge')
   }
 
+  const handleProfileClick = () => {
+    navigate('/profile')
+  }
+
   return (
     <MilitaryPageLayout 
       title={<h2>SỔ TAY ĐIỆN TỬ<br/>LỮ ĐOÀN 83</h2>}
-      showTopIcons={false}
+      showTopIcons={true}
+      customTopIcons={
+        <>        
+          <div></div>
+          {user && (
+            <button 
+              className="icon-button profile-button"
+              onClick={handleProfileClick}
+              aria-label="Hồ sơ cá nhân"
+            >
+              <User size={20} />
+            </button>
+          )}
+        </>
+      }
     >
 
       {/* Navigation Grid */}

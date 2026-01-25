@@ -16,6 +16,15 @@
   flex-wrap: wrap;
 }
 
+/* Preview Top Actions */
+.preview-top-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  width: 100%;
+}
+
 /* Page Actions Bar */
 .page-actions {
   display: flex;

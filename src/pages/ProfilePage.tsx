@@ -20,10 +20,8 @@ export const ProfilePage: React.FC = () => {
       
       {/* Top Icons */}
       <div className="top-icons">
+        <div></div>
         <HomeButton variant="icon" />
-        <button className="icon-button" onClick={() => navigate('/notifications')}>
-          <Bell size={20} />
-        </button>
       </div>
 
       {/* Main Container */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useContentPermission } from '../hooks/useContentPermissions'
 import { 
@@ -10,7 +10,7 @@ import {
 } from '../services/contentService'
 import { checkFirestoreUserDocument } from '../utils/debugAuth'
 import { MilitaryPageLayout } from '../components/layout'
-import { LoadingState, ErrorState } from '../components/ui'
+import { LoadingState, ErrorState, BackButton } from '../components/ui'
 import { ArrowLeft, Save, Eye, AlertTriangle } from 'lucide-react'
 import './ArticleEditorPage.css'
 
@@ -34,8 +34,13 @@ interface ArticleMetadata {
  */
 export const ArticleEditorPage: React.FC = () => {
   const { type, id } = useParams<{ type: string; id?: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
+  
+  // Determine content type from URL path
+  const contentType: ContentType = location.pathname.startsWith('/news') ? 'news' : 'knowledge'
+  const isEditMode = !!id
   
   // Form state
   const [article, setArticle] = useState<any>(null)
@@ -57,10 +62,6 @@ export const ArticleEditorPage: React.FC = () => {
   const [lastSavedData, setLastSavedData] = useState<any>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [pendingAction, setPendingAction] = useState<'save' | 'publish' | null>(null)
-  
-  // Determine content type and mode
-  const contentType: ContentType = type === 'news' ? 'news' : 'knowledge'
-  const isEditMode = !!id
   
   // Check permissions
   const { canUpdate } = useContentPermission(article)
@@ -464,13 +465,13 @@ export const ArticleEditorPage: React.FC = () => {
         title={<h2>Xem trước: {title}</h2>}
         showTopIcons={true}
         customTopIcons={
-          <button 
-            onClick={() => setIsPreview(false)}
-            className="preview-back-button"
-          >
-            <ArrowLeft size={20} />
-            Quay lại chỉnh sửa
-          </button>
+            <button 
+              onClick={() => setIsPreview(false)}
+              className="preview-back-button"
+            >
+              <ArrowLeft size={20} />
+              Quay lại chỉnh sửa
+            </button>
         }
       >
         <div className="article-preview-container">
@@ -535,24 +536,27 @@ export const ArticleEditorPage: React.FC = () => {
       title={<h2>{getPageTitle()}</h2>}
       showTopIcons={true}
       customTopIcons={
-        <div className="editor-top-actions">
-          {/* Autosave indicator */}
-          {hasUnsavedChanges && (
-            <div className="autosave-indicator">
-              <span className="autosave-dot"></span>
-              Có thay đổi chưa lưu
-            </div>
-          )}
-          
-          <button 
-            onClick={() => setIsPreview(true)}
-            className="preview-button"
-            disabled={!title.trim() || !content.trim()}
-          >
-            <Eye size={16} />
-            Xem trước
-          </button>
-        </div>
+        <>
+          <div className="editor-top-actions">          
+            {/* Autosave indicator */}
+            {hasUnsavedChanges && (
+              <div className="autosave-indicator">
+                <span className="autosave-dot"></span>
+                Có thay đổi chưa lưu
+              </div>
+            )}
+            
+            <button 
+              onClick={() => setIsPreview(true)}
+              className="preview-button"
+              disabled={!title.trim() || !content.trim()}
+            >
+              <Eye size={16} />
+              Xem trước
+            </button>
+          </div>
+          <BackButton to={contentType === 'news' ? '/news' : '/knowledge'} />
+        </>
       }
     >
       {/* Confirmation Dialog */}
