@@ -1,10 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useKnowledge } from '../hooks/useFirestore'
-import { 
-  getSavedArticles
-} from '../services/contentService'
+import { useEditorialViewMode } from '../hooks/useEditorialViewMode'
 import { 
   ArticleCard, 
   type Article,
@@ -14,7 +12,8 @@ import {
 } from '../components/ui'
 import { MilitaryPageLayout } from '../components/layout'
 import { KnowledgeSectionSelector, type KnowledgeSection } from '../components/knowledge/KnowledgeSectionSelector'
-import { BookOpen, Plus, Save } from 'lucide-react'
+import { EditorialModeSwitch } from '../components/editorial/EditorialModeSwitch'
+import { BookOpen, Plus } from 'lucide-react'
 import quanSuImage from '../assets/quan-su.png'
 import hauCanImage from '../assets/hau-can.png'
 import kyThuatImage from '../assets/ky-thuat.png'
@@ -31,47 +30,28 @@ export const KnowledgePage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   
-  // State for toggle between published and saved articles
-  const [showSaved, setShowSaved] = useState(false)
-  
   // Fetch published articles
   const { data: publishedKnowledge, loading: publishedLoading, error: publishedError, refetch: refetchPublished } = useKnowledge()
   
-  // Fetch saved articles (only when toggle is active)
-  const [savedKnowledge, setSavedKnowledge] = useState<Article[]>([])
-  const [savedLoading, setSavedLoading] = useState(false)
-  const [savedError, setSavedError] = useState<string | null>(null)
+  // Optimized view mode management with role-based access
+  const {
+    viewMode,
+    setViewMode,
+    displayData,
+    displayLoading,
+    displayError,
+    handleRefetch
+  } = useEditorialViewMode({
+    contentType: 'knowledge',
+    publishedData: publishedKnowledge,
+    publishedLoading,
+    publishedError,
+    refetchPublished
+  })
   
-  // Load saved articles when toggle is active
-  const loadSavedArticles = async () => {
-    if (!user) return
-    
-    try {
-      setSavedLoading(true)
-      setSavedError(null)
-      
-      const savedArticles = await getSavedArticles('knowledge', user.uid)
-      setSavedKnowledge(savedArticles)
-    } catch (err) {
-      setSavedError(err instanceof Error ? err.message : 'Lỗi khi tải bài viết đã lưu')
-    } finally {
-      setSavedLoading(false)
-    }
-  }
-  
-  // Toggle between published and saved articles
-  const handleToggleView = () => {
-    const newShowSaved = !showSaved
-    setShowSaved(newShowSaved)
-    
-    if (newShowSaved) {
-      loadSavedArticles()
-    }
-  }
-  
-  // Handle article click
+  // Handle article click based on view mode
   const handleArticleClick = (article: Article) => {
-    if (showSaved) {
+    if (viewMode === 'saved') {
       // Saved articles: navigate to edit page
       navigate(`/knowledge/edit/${article.id}`)
     } else {
@@ -85,24 +65,18 @@ export const KnowledgePage: React.FC = () => {
     navigate('/knowledge/create')
   }
   
-  // Determine which data to display
-  const displayData = showSaved ? savedKnowledge : publishedKnowledge
-  const displayLoading = showSaved ? savedLoading : publishedLoading
-  const displayError = showSaved ? savedError : publishedError
-  const handleRefetch = showSaved ? loadSavedArticles : refetchPublished
-  
   // Check if user is editor (for create button)
   const isEditor = user?.role === 'editor'
   
   return (
     <MilitaryPageLayout 
       title={<h2>KIẾN THỨC TỔNG HỢP</h2>}
-      subtitle={showSaved ? "Bài viết đã lưu của bạn" : "Nền tảng kiến thức quân sự toàn diện"}
+      subtitle={viewMode === 'saved' ? "Bản nháp của bạn" : "Nền tảng kiến thức quân sự toàn diện"}
     >
-      {/* Action Bar */}
-      <div className="page-actions">
-        <div className="action-buttons">
-          {isEditor && (
+      {/* Editorial Controls - Only visible to editors */}
+      {isEditor && (
+        <div className="page-actions">
+          <div className="action-buttons">
             <button 
               onClick={handleCreateNew}
               className="create-button"
@@ -110,29 +84,21 @@ export const KnowledgePage: React.FC = () => {
               <Plus size={16} />
               Tạo mới
             </button>
-          )}
-          
-          <button 
-            onClick={handleToggleView}
-            className={`toggle-button ${showSaved ? 'active' : ''}`}
-          >
-            <Save size={16} />
-            {showSaved ? 'Hiện thị đã xuất bản' : 'Bài đã lưu'}
-          </button>
+            
+            <EditorialModeSwitch
+              viewMode={viewMode}
+              onChange={setViewMode}
+              userRole={user?.role}
+            />
+          </div>
         </div>
-        
-        <div className="view-indicator">
-          <span className={`indicator ${showSaved ? 'saved' : 'published'}`}>
-            {showSaved ? 'ĐANG HIỂN THỊ CÁC BÀI VIẾT ĐÃ LƯU' : 'ĐANG HIỂN THỊ CÁC BÀI XUẤT BẢN'}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Section Selection */}
       <KnowledgeSectionSelector
         sections={SECTIONS}
         selectedSection={null}
-        onSectionSelect={() => {}} // Disabled when showing saved articles
+        onSectionSelect={() => {}} // Disabled when in saved mode
       />
 
       {/* Knowledge Content */}
@@ -147,8 +113,8 @@ export const KnowledgePage: React.FC = () => {
         ) : displayData.length === 0 ? (
           <EmptyState
             icon={<BookOpen size={48} />}
-            title={showSaved ? "CHƯA CÓ BÀI VIẾT ĐÃ LƯU" : "CHƯA CÓ KIẾN THỨC"}
-            message={showSaved ? "Bạn chưa có bài viết nào đã lưu." : "Chưa có kiến thức cho các ngành đã chọn."}
+            title={viewMode === 'saved' ? "CHƯA CÓ BẢN NHÁP" : "CHƯA CÓ KIẾN THỨC"}
+            message={viewMode === 'saved' ? "Bạn chưa có bản nháp nào." : "Chưa có kiến thức cho các ngành đã chọn."}
           />
         ) : (
           <div className="knowledge-grid">
@@ -157,7 +123,7 @@ export const KnowledgePage: React.FC = () => {
                 key={article.id}
                 article={article}
                 onClick={handleArticleClick}
-                isSaved={showSaved}
+                isSaved={viewMode === 'saved'}
               />
             ))}
           </div>

@@ -1,0 +1,77 @@
+/* Editorial Mode Switch - Military-themed segmented control */
+.editorial-mode-switch {
+  display: flex;
+  align-items: center;
+}
+
+.mode-segments {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--military-gold);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.mode-segment {
+  position: relative;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: none;
+  color: var(--text-dark);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-segment:hover {
+  background: rgba(255, 215, 0, 0.1);
+  color: var(--military-red);
+}
+
+.mode-segment.active {
+  background: var(--military-gold);
+  color: var(--text-dark);
+  font-weight: var(--font-semibold);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.segment-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--military-gold);
+  opacity: 0.3;
+}
+
+/* Military-themed focus states */
+.mode-segment:focus {
+  outline: 2px solid var(--military-red);
+  outline-offset: 2px;
+}
+
+.mode-segment:active {
+  transform: translateY(1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mode-segment {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--text-xs);
+    min-width: 100px;
+  }
+  
+  .segment-divider {
+    height: 20px;
+  }
+}
