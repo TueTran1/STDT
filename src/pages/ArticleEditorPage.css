@@ -520,6 +520,14 @@
   color: var(--text-dark);
 }
 
+.preview-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #ccc;
+  color: #999;
+  border-color: #ccc;
+}
+
 .preview-back-button {
   display: flex;
   align-items: center;
