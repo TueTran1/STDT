@@ -26,5 +26,4 @@ export { ArticleDetailHeader, type ArticleDetailHeaderProps } from './ArticleDet
 export { ArticleContent, type ArticleContentProps } from './ArticleContent'
 export { ArticleDetailTags, type ArticleDetailTagsProps } from './ArticleDetailTags'
 export { ArticleFooterMeta, type ArticleFooterMetaProps } from './ArticleFooterMeta'
-export { ArticleErrorState, type ArticleErrorStateProps } from './ArticleErrorState'
 export { ArticleLoadingState, type ArticleLoadingStateProps } from './ArticleLoadingState'

@@ -15,7 +15,6 @@ import AdminDashboard from './pages/AdminDashboard'
 import { ArticlePage } from './pages/ArticlePage'
 import { ArticleEditorPage } from './pages/ArticleEditorPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { AccessDeniedPage } from './pages/AccessDeniedPage'
 
 function App() {
 
@@ -76,8 +75,6 @@ function App() {
               </AdminRoute>
             } />
             
-            {/* Access Denied Route */}
-            <Route path="/access-denied" element={<AccessDeniedPage />} />
             
             {/* 404 Fallback Route */}
             <Route path="*" element={<NotFoundPage />} />

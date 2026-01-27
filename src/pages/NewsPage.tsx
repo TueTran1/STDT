@@ -58,8 +58,8 @@ export const NewsPage: React.FC = () => {
   
   return (
     <MilitaryPageLayout 
-      title={<h2>BẢN TIN LỮ ĐOÀN</h2>}
-      subtitle={viewMode === 'saved' ? "Bản nháp của bạn" : "Cập nhật thông tin mới nhất"}
+      title={<h2>TIN TỨC</h2>}
+      subtitle={viewMode === 'saved' ? "Bản nháp của bạn" : "Bản tin Lữ đoàn"}
     >
       {/* Editorial Controls - Only visible to editors */}
       {isEditor && (

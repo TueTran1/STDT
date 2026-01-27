@@ -30,6 +30,9 @@ export const KnowledgePage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   
+  // State for selected section
+  const [selectedSection, setSelectedSection] = React.useState<string | null>(null)
+  
   // Fetch published articles
   const { data: publishedKnowledge, loading: publishedLoading, error: publishedError, refetch: refetchPublished } = useKnowledge()
   
@@ -48,6 +51,12 @@ export const KnowledgePage: React.FC = () => {
     publishedError,
     refetchPublished
   })
+  
+  // Filter articles by selected section
+  const filteredData = React.useMemo(() => {
+    if (!selectedSection) return displayData
+    return displayData.filter((article: Article) => article.category === selectedSection)
+  }, [displayData, selectedSection])
   
   // Handle article click based on view mode
   const handleArticleClick = (article: Article) => {
@@ -70,7 +79,7 @@ export const KnowledgePage: React.FC = () => {
   
   return (
     <MilitaryPageLayout 
-      title={<h2>KIẾN THỨC TỔNG HỢP</h2>}
+      title={<h2>KIẾN THỨC CẦN CÓ</h2>}
       subtitle={viewMode === 'saved' ? "Bản nháp của bạn" : "Nền tảng kiến thức quân sự toàn diện"}
     >
       {/* Editorial Controls - Only visible to editors */}
@@ -97,12 +106,12 @@ export const KnowledgePage: React.FC = () => {
       {/* Section Selection */}
       <KnowledgeSectionSelector
         sections={SECTIONS}
-        selectedSection={null}
-        onSectionSelect={() => {}} // Disabled when in saved mode
+        selectedSection={selectedSection}
+        onSectionSelect={setSelectedSection}
       />
 
       {/* Knowledge Content */}
-      <div className="knowledge-content">
+      <div className="knowledge-content" style={{ marginTop: '2rem' }}>
         {displayLoading ? (
           <LoadingState message="Đang tải kiến thức..." />
         ) : displayError ? (
@@ -110,15 +119,15 @@ export const KnowledgePage: React.FC = () => {
             message={displayError}
             onRetry={handleRefetch}
           />
-        ) : displayData.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <EmptyState
             icon={<BookOpen size={48} />}
             title={viewMode === 'saved' ? "CHƯA CÓ BẢN NHÁP" : "CHƯA CÓ KIẾN THỨC"}
-            message={viewMode === 'saved' ? "Bạn chưa có bản nháp nào." : "Chưa có kiến thức cho các ngành đã chọn."}
+            message={viewMode === 'saved' ? "Bạn chưa có bản nháp nào." : (selectedSection ? `Chưa có kiến thức cho ngành ${SECTIONS.find(s => s.id === selectedSection)?.name}.` : "Chưa có kiến thức cho các ngành đã chọn.")}
           />
         ) : (
           <div className="knowledge-grid">
-            {displayData.map((article: Article) => (
+            {filteredData.map((article: Article) => (
               <ArticleCard
                 key={article.id}
                 article={article}

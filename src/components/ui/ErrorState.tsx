@@ -1,5 +1,5 @@
 import React from 'react'
-import { RefreshButton } from './RefreshButton'
+import { HomeButton } from './HomeButton'
 import { AlertTriangle } from 'lucide-react'
 
 export interface ErrorStateProps {
@@ -60,9 +60,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       )}
       
       {onRetry && (
-        <RefreshButton 
+        <HomeButton 
           onClick={onRetry} 
-          variant="large"
+          variant="full"
           className="error-retry-button"
         />
       )}

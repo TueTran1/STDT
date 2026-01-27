@@ -1,5 +1,5 @@
 import React from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { useKnowledge, useNews } from '../hooks/useFirestore'
 import {
   LoadingState,
@@ -10,6 +10,7 @@ import { Newspaper, Landmark, BookOpen, User, Calendar, Eye, Clock, FileText } f
 
 export const ArticlePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>()
+  const location = useLocation()
   
   // Get both knowledge and news data
   const { data: knowledgeData, loading: knowledgeLoading, error: knowledgeError } = useKnowledge()
@@ -31,8 +32,21 @@ export const ArticlePage: React.FC = () => {
     window.location.reload()
   }
 
-  // Handle back navigation based on article type
+  // Handle back navigation based on article type or URL path
   const getBackRoute = () => {
+    // For error states, check the URL path to determine the correct back route
+    if (error || !article) {
+      if (location.pathname.includes('/news/')) {
+        return '/news'
+      } else if (location.pathname.includes('/knowledge/')) {
+        return '/knowledge'
+      } else if (location.pathname.includes('/traditions/')) {
+        return '/traditions'
+      }
+      return '/'
+    }
+    
+    // For successful loads, use the determined article type
     switch (articleType) {
       case 'knowledge':
         return '/knowledge'

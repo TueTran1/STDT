@@ -1,13 +1,18 @@
 import React, { useState } from 'react'
 import { 
   Accordion, 
-  TimelineList, 
-  type TimelineCardProps,
-  ButtonGroup,
   type ButtonOption,
-  MinistryLeadersList
+  MinistryLeadersList,
+  ButtonGroup,
+  TimelineList
 } from '../components/ui'
+import type { TimelineCardProps } from '../components/ui/TimelineCard'
 import { MilitaryPageLayout } from '../components/layout'
+import { 
+  phanVanGiangProfile,
+  nguyenTrongNghiaProfile,
+  nguyenTanCuongProfile
+} from '../data/leaders'
 
 const TABS: ButtonOption[] = [
   { id: 'qndvn', label: 'TRUYỀN THỐNG QĐNDVN' },
@@ -17,6 +22,7 @@ const TABS: ButtonOption[] = [
 
 export const TraditionsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('qndvn')
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Timeline data for historical milestones
   const timelineData: TimelineCardProps[] = [
@@ -103,34 +109,88 @@ export const TraditionsPage: React.FC = () => {
     }
   ]
 
-  // Ministry of Defense leaders data
+  // Ministry of Defense leaders data - using real LeaderProfile structure
   const ministryLeadersData = [
     {
-      id: 'bo-truong',
-      title: 'Bộ trưởng Bộ Quốc phòng',
-      name: 'Đại tướng Phan Văn Giang',
-      image: '/src/assets/dai-tuong-phan-van-giang.png',
-      imageAlt: 'Đại tướng Phan Văn Giang'
+      ...phanVanGiangProfile,
+      // Legacy properties for backward compatibility with MinistryLeadersList
+      title: phanVanGiangProfile.currentTitles[phanVanGiangProfile.currentTitles.length - 1],
+      imageAlt: `Ảnh chân dung ${phanVanGiangProfile.name}`,
+      rank: 'Đại tướng',
+      birthYear: '1960',
+      birthPlace: 'Tỉnh Ninh Bình',
+      education: [
+        'Học viện Lục quân',
+        'Học viện Quốc phòng Việt Nam',
+        'Cao cấp lý luận chính trị'
+      ],
+      achievements: [
+        'Đóng góp quan trọng vào công tác hiện đại hóa quân đội',
+        'Nâng cao năng lực sẵn sàng chiến đấu của các lực lượng vũ trang',
+        'Đẩy mạnh hợp tác quốc phòng quốc tế'
+      ],
+      decorations: [
+        'Huân chương Quân công hạng Nhất',
+        'Huân chương Chiến công hạng Nhất',
+        'Huy chương Quân kỳ quyết thắng'
+      ]
     },
     {
-      id: 'chu-nhiem',
-      title: 'Chủ nhiệm Tổng cục Chính trị QĐND Việt Nam',
-      name: 'Đại tướng Nguyễn Trọng Nghĩa',
-      image: '/src/assets/dai-tuong-nguyen-trong-nghia.png',
-      imageAlt: 'Đại tướng Nguyễn Trọng Nghĩa'
+      ...nguyenTrongNghiaProfile,
+      // Legacy properties for backward compatibility with MinistryLeadersList
+      title: nguyenTrongNghiaProfile.currentTitles[nguyenTrongNghiaProfile.currentTitles.length - 1],
+      imageAlt: `Ảnh chân dung ${nguyenTrongNghiaProfile.name}`,
+      rank: 'Đại tướng',
+      birthYear: '1962',
+      birthPlace: 'Tỉnh Đồng Tháp',
+      education: [
+        'Trường Sĩ quan Chỉ huy-Kỹ thuật Thông tin',
+        'Học viện Chính trị',
+        'Cao cấp lý luận chính trị'
+      ],
+      achievements: [
+        'Đóng góp vào công tác xây dựng quân đội vững mạnh về chính trị',
+        'Nâng cao chất lượng công tác đảng, công tác chính trị',
+        'Đẩy mạnh công tác giáo dục truyền thống cách mạng'
+      ],
+      decorations: [
+        'Huân chương Quân công hạng Nhất',
+        'Huân chương Chiến công hạng Nhất',
+        'Huy chương Quân kỳ quyết thắng'
+      ]
     },
     {
-      id: 'tong-tham-muu',
-      title: 'Tổng Tham mưu trưởng QĐND Việt Nam, Thứ trưởng Bộ Quốc phòng',
-      name: 'Đại tướng Nguyễn Tân Cương',
-      image: '/src/assets/dai-tuong-nguyen-tan-cuong.png',
-      imageAlt: 'Đại tướng Nguyễn Tân Cương'
+      ...nguyenTanCuongProfile,
+      // Legacy properties for backward compatibility with MinistryLeadersList
+      title: nguyenTanCuongProfile.currentTitles[nguyenTanCuongProfile.currentTitles.length - 1],
+      imageAlt: `Ảnh chân dung ${nguyenTanCuongProfile.name}`,
+      rank: 'Đại tướng',
+      birthYear: '1966',
+      birthPlace: 'Tỉnh Ninh Bình',
+      education: [
+        'Trường Sĩ quan Lục quân 2',
+        'Học viện Lục quân',
+        'Học viện Quốc phòng',
+        'Cao cấp lý luận chính trị'
+      ],
+      achievements: [
+        'Đóng góp vào công tác xây dựng quân đội hiện đại',
+        'Nâng cao năng lực chỉ huy, tham mưu chiến đấu',
+        'Đẩy mạnh hợp tác quốc phòng quốc tế'
+      ],
+      decorations: [
+        'Huân chương Quân công hạng Nhất',
+        'Huân chương Chiến công hạng Nhất',
+        'Huy chương Quân kỳ quyết thắng'
+      ]
     }
   ]
 
   return (
     <MilitaryPageLayout 
       title={<h2>TRUYỀN THỐNG</h2>}
+      className={isDialogOpen ? 'behind-modal' : ''}
+      disableTopIcons={isDialogOpen}
     >
       {/* Tab Navigation - Horizontal */}
       <ButtonGroup
@@ -195,7 +255,7 @@ export const TraditionsPage: React.FC = () => {
                 {
                   id: 'ministry-leaders',
                   title: 'THỦ TRƯỞNG BỘ QUỐC PHÒNG',
-                  children: <MinistryLeadersList leaders={ministryLeadersData} />
+                  children: <MinistryLeadersList leaders={ministryLeadersData} onDialogStateChange={setIsDialogOpen} />
                 }
               ]}
               allowMultiple={false}
