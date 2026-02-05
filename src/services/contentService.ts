@@ -181,8 +181,12 @@ export const updateArticle = async (
     return {
       ...updatedData,
       id: updatedDoc.id,
-      createdAt: updatedData.createdAt?.toDate() || new Date(),
-      updatedAt: updatedData.updatedAt?.toDate() || new Date()
+      createdAt: updatedData.createdAt && typeof updatedData.createdAt === 'object' && 'toDate' in updatedData.createdAt 
+        ? (updatedData.createdAt as any).toDate() 
+        : (updatedData.createdAt instanceof Date ? updatedData.createdAt : new Date()),
+      updatedAt: updatedData.updatedAt && typeof updatedData.updatedAt === 'object' && 'toDate' in updatedData.updatedAt 
+        ? (updatedData.updatedAt as any).toDate() 
+        : (updatedData.updatedAt instanceof Date ? updatedData.updatedAt : new Date())
     } as Article
   } catch (error) {
     throw new Error(`Failed to update ${type} article: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -282,8 +286,12 @@ export const getPublishedArticles = async (
       return {
         ...data,
         id: doc.id,
-        createdAt: data.createdAt?.toDate?.() || new Date(),
-        updatedAt: data.updatedAt?.toDate?.() || new Date()
+        createdAt: data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt 
+          ? (data.createdAt as any).toDate() 
+          : (data.createdAt instanceof Date ? data.createdAt : new Date()),
+        updatedAt: data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt 
+          ? (data.updatedAt as any).toDate() 
+          : (data.updatedAt instanceof Date ? data.updatedAt : new Date())
       } as Article
     })
   } catch (error) {
@@ -343,8 +351,12 @@ export const getSavedArticles = async (
         return {
           ...data,
           id: doc.id,
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-          updatedAt: data.updatedAt?.toDate?.() || new Date()
+          createdAt: data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt 
+            ? (data.createdAt as any).toDate() 
+            : (data.createdAt instanceof Date ? data.createdAt : new Date()),
+          updatedAt: data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt 
+            ? (data.updatedAt as any).toDate() 
+            : (data.updatedAt instanceof Date ? data.updatedAt : new Date())
         } as Article
       })
     } catch (primaryError) {
@@ -379,8 +391,12 @@ export const getSavedArticles = async (
           return {
             ...data,
             id: doc.id,
-            createdAt: data.createdAt?.toDate?.() || new Date(),
-            updatedAt: data.updatedAt?.toDate?.() || new Date()
+            createdAt: data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt 
+              ? (data.createdAt as any).toDate() 
+              : (data.createdAt instanceof Date ? data.createdAt : new Date()),
+            updatedAt: data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt 
+              ? (data.updatedAt as any).toDate() 
+              : (data.updatedAt instanceof Date ? data.updatedAt : new Date())
           } as Article
         })
       } catch (fallbackError) {
@@ -441,8 +457,12 @@ export const getArticleById = async (
     return {
       ...data,
       id: docSnap.id,
-      createdAt: data.createdAt as Date,
-      updatedAt: data.updatedAt as Date
+      createdAt: data.createdAt && typeof data.createdAt === 'object' && 'toDate' in data.createdAt 
+        ? (data.createdAt as any).toDate() 
+        : (data.createdAt instanceof Date ? data.createdAt : new Date()),
+      updatedAt: data.updatedAt && typeof data.updatedAt === 'object' && 'toDate' in data.updatedAt 
+        ? (data.updatedAt as any).toDate() 
+        : (data.updatedAt instanceof Date ? data.updatedAt : new Date())
     } as Article
   } catch (error) {
     throw error

@@ -1,51 +1,49 @@
+// EditorialModeSwitch Component
+// Toggle switch for published/saved view modes
+// Only visible to users with editor permissions
+
 import React from 'react'
-import './EditorialModeSwitch.css'
+import { useViewMode } from '../../hooks/useViewMode'
 
-export type ViewMode = 'published' | 'saved'
-
-interface EditorialModeSwitchProps {
-  viewMode: ViewMode
-  onChange: (mode: ViewMode) => void
-  userRole?: string | null
+export interface EditorialModeSwitchProps {
+  className?: string
 }
 
+/**
+ * Editorial mode switch component
+ * Handles published/saved switching for editors
+ * Integrates with useViewMode hook
+ * Uses formal military color scheme (red/gold)
+ */
 export const EditorialModeSwitch: React.FC<EditorialModeSwitchProps> = ({
-  viewMode,
-  onChange,
-  userRole
+  className = ""
 }) => {
-  // Role-based visibility: ONLY editors can see this component
-  if (userRole !== 'editor') {
+  const { viewMode, canToggle, toggleViewMode } = useViewMode()
+
+  // Don't render if user can't toggle
+  if (!canToggle) {
     return null
   }
 
-  const handleModeChange = (mode: ViewMode) => {
-    if (mode !== viewMode) {
-      onChange(mode)
-    }
-  }
-
   return (
-    <div className="editorial-mode-switch">
-      <div className="mode-segments">
+    <div className={`editorial-mode-switch ${className}`}>
+      <div className="mode-toggle-group">
         <button
-          className={`mode-segment ${viewMode === 'published' ? 'active' : ''}`}
-          onClick={() => handleModeChange('published')}
-          aria-pressed={viewMode === 'published'}
-          aria-label="Chế độ hiển thị bài đã xuất bản"
+          className={`mode-button ${viewMode === 'published' ? 'active' : ''}`}
+          onClick={() => viewMode !== 'published' && toggleViewMode()}
+          aria-label="Hiển thị bài viết đã xuất bản"
         >
-          ĐÃ XUẤT BẢN
+          <span className="mode-indicator published-indicator"></span>
+          <span className="mode-text">Đã xuất bản</span>
         </button>
         
-        <div className="segment-divider" />
-        
         <button
-          className={`mode-segment ${viewMode === 'saved' ? 'active' : ''}`}
-          onClick={() => handleModeChange('saved')}
-          aria-pressed={viewMode === 'saved'}
-          aria-label="Chế độ hiển thị bản nháp"
+          className={`mode-button ${viewMode === 'saved' ? 'active' : ''}`}
+          onClick={() => viewMode !== 'saved' && toggleViewMode()}
+          aria-label="Hiển thị bài viết bản nháp"
         >
-          BẢN NHÁP
+          <span className="mode-indicator saved-indicator"></span>
+          <span className="mode-text">Bản nháp</span>
         </button>
       </div>
     </div>

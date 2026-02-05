@@ -19,9 +19,7 @@ interface ArticleMetaBarProps {
  */
 export const ArticleMetaBar: React.FC<ArticleMetaBarProps> = ({
   article,
-  mode,
-  type,
-  onFieldChange
+  type
 }) => {
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return 'N/A'

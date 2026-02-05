@@ -5,6 +5,9 @@
 /* Import refactored styling system */
 @import './styles/refactored.css';
 
+/* Import search highlighting styles */
+@import './utils/highlightText.css';
+
 /* ========================================
    LEGACY COMPONENT STYLES (to be migrated)
    ======================================== */

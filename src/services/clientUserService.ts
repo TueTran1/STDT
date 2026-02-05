@@ -41,7 +41,6 @@ export const createUserClient = async (data: CreateUserRequest): Promise<CreateU
 
   try {
     const temporaryPassword = generateTemporaryPassword()
-    console.log('Creating user with secondary auth:', { email: data.email, role: data.role })
     
     // Step 1: Create Firebase Auth user using secondary auth (doesn't affect main admin session)
     const userCredential = await createUserWithEmailAndPassword(
@@ -85,9 +84,7 @@ export const createUserClient = async (data: CreateUserRequest): Promise<CreateU
     }
 
     await setDoc(doc(db, 'users', userCredential.user.uid), userDoc)
-    
-    console.log('User created successfully:', { uid: userCredential.user.uid, email: data.email })
-    
+        
     return {
       success: true,
       uid: userCredential.user.uid,
@@ -97,7 +94,6 @@ export const createUserClient = async (data: CreateUserRequest): Promise<CreateU
     }
 
   } catch (error: any) {
-    console.error('User creation error:', error)
     
     // Handle specific Firebase Auth errors
     if (error.code === 'auth/email-already-in-use') {

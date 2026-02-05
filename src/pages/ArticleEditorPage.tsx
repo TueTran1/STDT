@@ -167,6 +167,7 @@ export const ArticleEditorPage: React.FC = () => {
           setTitle(existingArticle.title || '')
           setContent(existingArticle.content || '')
           setExcerpt(existingArticle.excerpt || '')
+          setSummary((existingArticle as any).summary || '')
           setTags(existingArticle.tags || [])
           setFeatured(existingArticle.featured || false)
           setStatus(existingArticle.status || 'saved')

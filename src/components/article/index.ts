@@ -13,7 +13,7 @@ export { ArticleSummary } from './ArticleSummary'
 export { ArticleActions } from './ArticleActions'
 
 // Legacy exports for backward compatibility
-export { ArticleCard, type ArticleCardProps, type Article as ArticleCardType } from './ArticleCard'
+export { ArticleCard, type ArticleCardProps, type Article } from './ArticleCard'
 export { ArticleHeader, type ArticleHeaderProps } from './ArticleHeader'
 export { ArticleMeta, type ArticleMetaProps } from './ArticleMeta'
 export { ArticleTags, type ArticleTagsProps } from './ArticleTags'

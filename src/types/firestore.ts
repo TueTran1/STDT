@@ -116,7 +116,7 @@ export interface NewsDocument extends BaseDocument {
   excerpt: string // Brief description
   content: string // Full content (HTML or markdown)
   category: 'announcement' | 'event' | 'update' | 'general'
-  status: 'draft' | 'published' | 'archived'
+  status: 'saved' | 'published'
   featured: boolean
   publishedAt?: Date
   author: {
@@ -164,7 +164,7 @@ export interface TraditionDocument extends BaseDocument {
   }
   significance: string // Cultural importance
   relatedTraditions: string[] // IDs of related traditions
-  status: 'draft' | 'published' | 'archived'
+  status: 'saved' | 'published'
   featured: boolean
   tags: string[]
   contributor: {
@@ -197,7 +197,7 @@ export interface KnowledgeDocument extends BaseDocument {
   estimatedTime: number // Minutes to read/complete
   prerequisites: string[] // IDs of related knowledge documents
   relatedKnowledge: string[] // IDs of related knowledge documents
-  status: 'draft' | 'published' | 'archived'
+  status: 'saved' | 'published'
   featured: boolean
   author: {
     uid: string

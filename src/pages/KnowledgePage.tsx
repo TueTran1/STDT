@@ -1,25 +1,30 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useKnowledge } from '../hooks/useFirestore'
-import { useEditorialViewMode } from '../hooks/useEditorialViewMode'
+import { useArticleQuery } from '../hooks/useArticleQuery'
+import { useSearchQuery } from '../hooks/useSearchQuery'
+import { useCategoryFilter } from '../hooks/useCategoryFilter'
 import { 
   ArticleCard, 
-  type Article,
-  LoadingState, 
-  ErrorState, 
-  EmptyState
+  type Article
 } from '../components/ui'
 import { MilitaryPageLayout } from '../components/layout'
-import { KnowledgeSectionSelector, type KnowledgeSection } from '../components/knowledge/KnowledgeSectionSelector'
+import { SearchInput } from '../components/search/SearchInput'
+import { CategoryFilter } from '../components/category/CategoryFilter'
+import { ArticleGrid } from '../components/pagination/ArticleGrid'
 import { EditorialModeSwitch } from '../components/editorial/EditorialModeSwitch'
-import { BookOpen, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import quanSuImage from '../assets/quan-su.png'
 import hauCanImage from '../assets/hau-can.png'
 import kyThuatImage from '../assets/ky-thuat.png'
 import chinhTriImage from '../assets/chinh-tri.png'
+import '../components/search/SearchInput.css'
+import '../components/pagination/ArticleGrid.css'
+import '../components/category/CategoryFilter.css'
+import '../components/editorial/EditorialModeSwitch.css'
+import './KnowledgePage.css'
 
-const SECTIONS: KnowledgeSection[] = [
+const SECTIONS = [
   { id: 'quan-su', name: 'QUÂN SỰ', description: 'Kiến thức quân sự', icon: <img src={quanSuImage} alt="Quân sự" width="32" height="32" /> },
   { id: 'chinh-tri', name: 'CHÍNH TRỊ', description: 'Kiến thức chính trị', icon: <img src={chinhTriImage} alt="Chính trị" width="32" height="32" /> },
   { id: 'hau-can', name: 'HẬU CẦN', description: 'Kiến thức hậu cần', icon: <img src={hauCanImage} alt="Hậu cần" width="32" height="32" /> },
@@ -30,37 +35,34 @@ export const KnowledgePage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   
-  // State for selected section
-  const [selectedSection, setSelectedSection] = React.useState<string | null>(null)
-  
-  // Fetch published articles
-  const { data: publishedKnowledge, loading: publishedLoading, error: publishedError, refetch: refetchPublished } = useKnowledge()
-  
-  // Optimized view mode management with role-based access
+  // Use the new architecture - single source of truth for article data
   const {
-    viewMode,
-    setViewMode,
-    displayData,
-    displayLoading,
-    displayError,
-    handleRefetch
-  } = useEditorialViewMode({
-    contentType: 'knowledge',
-    publishedData: publishedKnowledge,
-    publishedLoading,
-    publishedError,
-    refetchPublished
+    articles,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    error,
+    loadMore,
+    currentSearchQuery,
+    currentCategory,
+    currentViewMode: queryViewMode
+  } = useArticleQuery({
+    articleType: 'knowledge',
+    initialViewMode: 'published'
   })
   
-  // Filter articles by selected section
-  const filteredData = React.useMemo(() => {
-    if (!selectedSection) return displayData
-    return displayData.filter((article: Article) => article.category === selectedSection)
-  }, [displayData, selectedSection])
+  // Use queryViewMode for navigation logic to ensure consistency
+  const navigationViewMode = queryViewMode
+  
+  // Search state management
+  const { isActive: isSearchActive } = useSearchQuery()
+  
+  // Category state management
+  const { isActive: isCategoryActive } = useCategoryFilter()
   
   // Handle article click based on view mode
   const handleArticleClick = (article: Article) => {
-    if (viewMode === 'saved') {
+    if (navigationViewMode === 'saved') {
       // Saved articles: navigate to edit page
       navigate(`/knowledge/edit/${article.id}`)
     } else {
@@ -77,10 +79,23 @@ export const KnowledgePage: React.FC = () => {
   // Check if user is editor (for create button)
   const isEditor = user?.role === 'editor'
   
+  // Render article card
+  const renderArticleCard = (article: Article, onClick: (article: Article) => void, searchQuery?: string | null) => {
+    return (
+      <ArticleCard
+        key={article.id}
+        article={article}
+        onClick={onClick}
+        isSaved={navigationViewMode === 'saved'}
+        searchQuery={searchQuery || undefined}
+      />
+    )
+  }
+  
   return (
     <MilitaryPageLayout 
       title={<h2>KIẾN THỨC CẦN CÓ</h2>}
-      subtitle={viewMode === 'saved' ? "Bản nháp của bạn" : "Nền tảng kiến thức quân sự toàn diện"}
+      subtitle={isSearchActive ? `Tìm kiếm: ${currentSearchQuery || ''}` : (isCategoryActive ? `Danh mục: ${SECTIONS.find(s => s.id === currentCategory)?.name || ''}` : (queryViewMode === 'saved' ? "Bản nháp của bạn" : "Nền tảng kiến thức quân sự toàn diện"))}
     >
       {/* Editorial Controls - Only visible to editors */}
       {isEditor && (
@@ -94,50 +109,37 @@ export const KnowledgePage: React.FC = () => {
               Tạo mới
             </button>
             
-            <EditorialModeSwitch
-              viewMode={viewMode}
-              onChange={setViewMode}
-              userRole={user?.role}
-            />
+            <EditorialModeSwitch className="editorial-mode-toggle" />
           </div>
         </div>
       )}
 
-      {/* Section Selection */}
-      <KnowledgeSectionSelector
-        sections={SECTIONS}
-        selectedSection={selectedSection}
-        onSectionSelect={setSelectedSection}
+      {/* Search Input */}
+      <SearchInput 
+        placeholder="Tìm kiếm kiến thức..."
+        className="knowledge-search"
       />
 
-      {/* Knowledge Content */}
-      <div className="knowledge-content" style={{ marginTop: '2rem' }}>
-        {displayLoading ? (
-          <LoadingState message="Đang tải kiến thức..." />
-        ) : displayError ? (
-          <ErrorState 
-            message={displayError}
-            onRetry={handleRefetch}
-          />
-        ) : filteredData.length === 0 ? (
-          <EmptyState
-            icon={<BookOpen size={48} />}
-            title={viewMode === 'saved' ? "CHƯA CÓ BẢN NHÁP" : "CHƯA CÓ KIẾN THỨC"}
-            message={viewMode === 'saved' ? "Bạn chưa có bản nháp nào." : (selectedSection ? `Chưa có kiến thức cho ngành ${SECTIONS.find(s => s.id === selectedSection)?.name}.` : "Chưa có kiến thức cho các ngành đã chọn.")}
-          />
-        ) : (
-          <div className="knowledge-grid">
-            {filteredData.map((article: Article) => (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                onClick={handleArticleClick}
-                isSaved={viewMode === 'saved'}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Category Filter */}
+      <CategoryFilter 
+        categories={SECTIONS}
+        className="knowledge-categories"
+      />
+
+      {/* Article Grid with Pagination */}
+      <ArticleGrid
+        articles={articles}
+        isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
+        error={error}
+        onLoadMore={loadMore}
+        onArticleClick={handleArticleClick}
+        searchQuery={currentSearchQuery}
+        viewMode={queryViewMode}
+        renderArticleCard={renderArticleCard}
+        className="knowledge-articles"
+      />
     </MilitaryPageLayout>
   )
 }

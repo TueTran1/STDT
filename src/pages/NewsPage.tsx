@@ -1,45 +1,50 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useNews } from '../hooks/useFirestore'
 import { useAuth } from '../contexts/AuthContext'
-import { useEditorialViewMode } from '../hooks/useEditorialViewMode'
+import { useArticleQuery } from '../hooks/useArticleQuery'
+import { useSearchQuery } from '../hooks/useSearchQuery'
 import { 
   ArticleCard, 
-  type Article,
-  LoadingState, 
-  ErrorState, 
-  EmptyState
+  type Article
 } from '../components/ui'
 import { MilitaryPageLayout } from '../components/layout'
+import { SearchInput } from '../components/search/SearchInput'
+import { ArticleGrid } from '../components/pagination/ArticleGrid'
 import { EditorialModeSwitch } from '../components/editorial/EditorialModeSwitch'
-import { Newspaper, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import '../components/search/SearchInput.css'
+import '../components/pagination/ArticleGrid.css'
+import '../components/editorial/EditorialModeSwitch.css'
+import './NewsPage.css'
 
 export const NewsPage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   
-  // Fetch published articles
-  const { data: publishedNews, loading: publishedLoading, error: publishedError, refetch: refetchPublished } = useNews()
-  
-  // Optimized view mode management with role-based access
+  // Use the new architecture - single source of truth for article data
   const {
-    viewMode,
-    setViewMode,
-    displayData,
-    displayLoading,
-    displayError,
-    handleRefetch
-  } = useEditorialViewMode({
-    contentType: 'news',
-    publishedData: publishedNews,
-    publishedLoading,
-    publishedError,
-    refetchPublished
+    articles,
+    hasMore,
+    isLoading,
+    isLoadingMore,
+    error,
+    loadMore,
+    currentSearchQuery,
+    currentViewMode: queryViewMode
+  } = useArticleQuery({
+    articleType: 'news',
+    initialViewMode: 'published'
   })
+  
+  // Use queryViewMode for navigation logic to ensure consistency
+  const navigationViewMode = queryViewMode
+  
+  // Search state management
+  const { isActive: isSearchActive } = useSearchQuery()
   
   // Handle article click based on view mode
   const handleArticleClick = (article: Article) => {
-    if (viewMode === 'saved') {
+    if (navigationViewMode === 'saved') {
       // Saved articles: navigate to edit page
       navigate(`/news/edit/${article.id}`)
     } else {
@@ -56,10 +61,23 @@ export const NewsPage: React.FC = () => {
   // Check if user is editor (for create button)
   const isEditor = user?.role === 'editor'
   
+  // Render article card
+  const renderArticleCard = (article: Article, onClick: (article: Article) => void, searchQuery?: string | null) => {
+    return (
+      <ArticleCard
+        key={article.id}
+        article={article}
+        onClick={onClick}
+        isSaved={navigationViewMode === 'saved'}
+        searchQuery={searchQuery || undefined}
+      />
+    )
+  }
+  
   return (
     <MilitaryPageLayout 
       title={<h2>TIN TỨC</h2>}
-      subtitle={viewMode === 'saved' ? "Bản nháp của bạn" : "Bản tin Lữ đoàn"}
+      subtitle={isSearchActive ? `Tìm kiếm: ${currentSearchQuery || ''}` : (queryViewMode === 'saved' ? "Bản nháp của bạn" : "Bản tin Lữ đoàn")}
     >
       {/* Editorial Controls - Only visible to editors */}
       {isEditor && (
@@ -73,43 +91,31 @@ export const NewsPage: React.FC = () => {
               Tạo mới
             </button>
             
-            <EditorialModeSwitch
-              viewMode={viewMode}
-              onChange={setViewMode}
-              userRole={user?.role}
-            />
+            <EditorialModeSwitch className="editorial-mode-toggle" />
           </div>
         </div>
       )}
 
-      {/* News Content */}
-      <div className="news-content">
-        {displayLoading ? (
-          <LoadingState message="Đang tải tin tức..." />
-        ) : displayError ? (
-          <ErrorState 
-            message={displayError}
-            onRetry={handleRefetch}
-          />
-        ) : displayData.length === 0 ? (
-          <EmptyState
-            icon={<Newspaper size={48} />}
-            title={viewMode === 'saved' ? "CHƯA CÓ BẢN NHÁP" : "CHƯA CÓ TIN TỨC"}
-            message={viewMode === 'saved' ? "Bạn chưa có bản nháp nào." : "Chưa có thông báo nào được đăng tải. Vui lòng quay lại sau."}
-          />
-        ) : (
-          <div className="news-grid">
-            {displayData.map((item: Article) => (
-              <ArticleCard
-                key={item.id}
-                article={item}
-                onClick={handleArticleClick}
-                isSaved={viewMode === 'saved'}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Search Input */}
+      <SearchInput 
+        placeholder="Tìm kiếm tin tức..."
+        className="news-search"
+      />
+
+      {/* Article Grid with Pagination */}
+      <ArticleGrid
+        articles={articles}
+        isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
+        error={error}
+        onLoadMore={loadMore}
+        onArticleClick={handleArticleClick}
+        searchQuery={currentSearchQuery}
+        viewMode={queryViewMode}
+        renderArticleCard={renderArticleCard}
+        className="news-articles"
+      />
     </MilitaryPageLayout>
   )
 }

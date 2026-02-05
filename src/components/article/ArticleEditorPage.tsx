@@ -2,8 +2,6 @@ import React, { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArticleShell } from './ArticleShell'
 import { useArticleEditor } from '../../hooks/useArticleEditor'
-import { useAuth } from '../../contexts/AuthContext'
-import { LoadingState, ErrorState } from '../ui'
 import type { ContentType } from './ArticleShell'
 
 /**
@@ -20,7 +18,6 @@ import type { ContentType } from './ArticleShell'
 export const ArticleEditorPage: React.FC = () => {
   const { id, type } = useParams<{ id?: string; type: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
   
   // Determine mode and content type
   const mode = id ? 'update' : 'create'
@@ -29,16 +26,11 @@ export const ArticleEditorPage: React.FC = () => {
   // Use the centralized editor hook
   const {
     state,
-    handleFieldChange,
     saveDraft,
     publishArticle,
-    clearError,
     canNavigateAway,
-    isCreateMode,
-    isUpdateMode,
     isSaving,
     hasError,
-    saveStatus,
     hasUnsavedChanges
   } = useArticleEditor(contentType, mode)
 
@@ -68,7 +60,7 @@ export const ArticleEditorPage: React.FC = () => {
   }
 
   // Handle save action
-  const handleSave = async (data: any, status: 'saved' | 'published') => {
+  const handleSave = async (_data: any, status: 'saved' | 'published') => {
     if (status === 'saved') {
       await saveDraft()
     } else {
@@ -77,7 +69,7 @@ export const ArticleEditorPage: React.FC = () => {
   }
 
   // Loading state
-  if (isSaving && saveStatus === 'saving') {
+  if (isSaving) {
     return (
       <ArticleShell
         mode="edit"

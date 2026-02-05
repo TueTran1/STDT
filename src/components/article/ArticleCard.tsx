@@ -4,7 +4,7 @@ import { ArticleMeta } from './ArticleMeta'
 import { ArticleTags } from './ArticleTags'
 import { ArticleAttachments } from './ArticleAttachments'
 import { ArticleFooter } from './ArticleFooter'
-import { Calendar, User, Save, Edit } from 'lucide-react'
+import { Calendar, User, Save } from 'lucide-react'
 
 export interface Article {
   id: string
@@ -24,13 +24,14 @@ export interface Article {
   }>
   views?: number
   slug?: string
-  status?: 'saved' | 'published' | 'draft' | 'archived' // Added status field
+  status?: 'saved' | 'published' // All Firestore status values
 }
 
 export interface ArticleCardProps {
   article: Article
   onClick: (article: Article) => void
   isSaved?: boolean // New prop to indicate if this is a saved article
+  searchQuery?: string // Optional search query for highlighting
   children?: React.ReactNode
 }
 
@@ -57,10 +58,11 @@ export interface ArticleCardProps {
  *   isSaved={false}
  * />
  */
-export const ArticleCard: React.FC<ArticleCardProps> = ({ 
+export const ArticleCardComponent: React.FC<ArticleCardProps> = ({ 
   article, 
   onClick,
   isSaved = false,
+  searchQuery,
   children 
 }) => {
   const handleClick = () => {
@@ -99,6 +101,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <ArticleMeta 
             title={article.title}
             previewText={previewText}
+            searchQuery={searchQuery}
           />
 
           {/* Publication Info */}
@@ -138,7 +141,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           </div>
 
           {/* Tags */}
-          <ArticleTags tags={article.tags} />
+          <ArticleTags tags={article.tags || []} />
 
           {/* Attachments */}
           {article.attachments && article.attachments.length > 0 && (
@@ -160,3 +163,5 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     </div>
   )
 }
+
+export const ArticleCard = React.memo(ArticleCardComponent)

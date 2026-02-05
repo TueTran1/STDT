@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { HomeButton } from '../components/ui'
-import { Bell, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import logoBrigade from '../assets/logo-brigade.png'
 
 export const ProfilePage: React.FC = () => {

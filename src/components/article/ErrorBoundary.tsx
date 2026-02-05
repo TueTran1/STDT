@@ -1,6 +1,6 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import React, { Component, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
-import { getErrorInfo, handleApiError, ErrorType } from '../../utils/errorHandler'
+import { handleApiError, ErrorInfo } from '../../utils/errorHandler'
 import './ErrorBoundary.css'
 
 interface ErrorBoundaryState {

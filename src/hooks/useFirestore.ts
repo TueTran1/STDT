@@ -62,7 +62,7 @@ export const useKnowledge = (section?: string) => {
 
 // Specific hook for news articles
 export const useNews = () => {
-  const constraints = [where('status', '==', 'published')]
+  const constraints = [where('status', '==', 'published'), orderBy('createdAt', 'desc')]
 
   return useFirestore<NewsDocument>('news', constraints)
 }

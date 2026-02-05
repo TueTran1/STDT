@@ -32,11 +32,6 @@ function App() {
             <Route path="/knowledge" element={<KnowledgePage />} />
             <Route path="/regulations" element={<RegulationsPage />} />
             {/* <Route path="/notifications" element={<NotificationsPage />} /> */}
-            <Route path="/:type/:slug" element={<ArticlePage />} />
-            <Route path="/traditions/:slug" element={<ArticlePage />} />
-            <Route path="/news/:slug" element={<ArticlePage />} />
-            <Route path="/knowledge/:slug" element={<ArticlePage />} />
-            <Route path="/regulations/:slug" element={<ArticlePage />} />
             
             {/* Authentication Required Routes */}
             <Route path="/login" element={<LoginPage />} />
@@ -46,7 +41,7 @@ function App() {
               </ProfileRoute>
             } />
             
-            {/* Editor Only Routes */}
+            {/* Editor Only Routes - MUST come before public slug routes */}
             <Route path="/news/create" element={
               <EditorRoute>
                 <ArticleEditorPage />
@@ -67,6 +62,13 @@ function App() {
                 <ArticleEditorPage />
               </EditorRoute>
             } />
+            
+            {/* Public Article Routes - MUST come after edit routes */}
+            <Route path="/:type/:slug" element={<ArticlePage />} />
+            <Route path="/traditions/:slug" element={<ArticlePage />} />
+            <Route path="/news/:slug" element={<ArticlePage />} />
+            <Route path="/knowledge/:slug" element={<ArticlePage />} />
+            <Route path="/regulations/:slug" element={<ArticlePage />} />
             
             {/* Admin Only Routes */}
             <Route path="/admin" element={

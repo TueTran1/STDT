@@ -32,8 +32,6 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
   pendingNavigation
 }) => {
   const {
-    showWarning,
-    pendingNavigation,
     confirmNavigation,
     cancelNavigation
   } = useUnsavedChangesProtection(hasUnsavedChanges)

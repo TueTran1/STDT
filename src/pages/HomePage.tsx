@@ -22,10 +22,10 @@ export const HomePage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">User Profile</h2>
             <div className="space-y-2">
               <p className="text-gray-600">
-                <span className="font-medium">Username:</span> {user?.username || 'N/A'}
+                <span className="font-medium">Username:</span> {user?.displayName || 'N/A'}
               </p>
               <p className="text-gray-600">
-                <span className="font-medium">User ID:</span> {user?.id || 'N/A'}
+                <span className="font-medium">User ID:</span> {user?.uid || 'N/A'}
               </p>
               <p className="text-gray-600">
                 <span className="font-medium">Role:</span> {user?.role || 'N/A'}

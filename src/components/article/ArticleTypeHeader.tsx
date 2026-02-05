@@ -17,7 +17,6 @@ interface ArticleTypeHeaderProps {
  */
 export const ArticleTypeHeader: React.FC<ArticleTypeHeaderProps> = ({
   type,
-  mode
 }) => {
   const getTypeConfig = () => {
     switch (type) {

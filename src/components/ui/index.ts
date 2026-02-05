@@ -84,6 +84,18 @@ export { HomeButton, type HomeButtonProps } from './HomeButton'
 export { RefreshButton, type RefreshButtonProps } from './RefreshButton'
 export { BackButton, type BackButtonProps } from './BackButton'
 
+// Search components export
+export { SearchInput, type SearchInputProps } from '../search/SearchInput'
+
+// Category components export
+export { CategoryFilter, type CategoryFilterProps, type Category } from '../category/CategoryFilter'
+
+// Pagination components export
+export { ArticleGrid, type ArticleGridProps } from '../pagination/ArticleGrid'
+
+// Editorial components export
+export { EditorialModeSwitch, type EditorialModeSwitchProps } from '../editorial/EditorialModeSwitch'
+
 // Knowledge components export
 export { 
   KnowledgeSectionSelector, 

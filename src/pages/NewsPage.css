@@ -1,0 +1,86 @@
+/* News Page Styles */
+
+/* Page Actions */
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: var(--spacing-md) 0;
+  padding: 0 var(--spacing-md);
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.create-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--military-red);
+  color: var(--text-light);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.create-button:hover {
+  background: var(--red-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.create-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-md);
+}
+
+/* Editorial Mode Toggle */
+.editorial-mode-toggle {
+  margin-left: auto;
+}
+
+/* Search and Category Layout */
+.news-search {
+  margin: var(--spacing-md) 0;
+}
+
+.news-categories {
+  margin: var(--spacing-md) 0;
+}
+
+.news-articles {
+  margin-top: var(--spacing-xl);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+  
+  .editorial-mode-toggle {
+    margin-left: 0;
+    order: -1;
+  }
+  
+  .create-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

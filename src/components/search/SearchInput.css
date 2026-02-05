@@ -1,0 +1,159 @@
+/* SearchInput Component Styles - Military Theme */
+.search-input {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--white-95);
+  border: 2px solid var(--military-red);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.search-input.search-active .search-input-container {
+  border-color: var(--military-red);
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1), var(--shadow-lg);
+}
+
+.search-input-field {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  font-size: var(--text-base);
+  font-family: inherit;
+  color: var(--text-dark);
+  outline: none;
+  font-weight: var(--font-medium);
+}
+
+.search-input-field::placeholder {
+  color: var(--gray-600);
+  font-style: italic;
+}
+
+.search-clear-button,
+.search-search-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.search-clear-button:hover,
+.search-search-button:hover {
+  background: var(--military-red);
+  color: var(--text-light);
+  transform: scale(1.05);
+}
+
+.search-clear-button:active,
+.search-search-button:active {
+  transform: scale(0.95);
+}
+
+.search-search-button {
+  border-left: 1px solid var(--gray-300);
+  background: linear-gradient(135deg, rgba(211, 47, 47, 0.05), transparent);
+}
+
+.search-search-button:hover {
+  background: var(--military-red);
+  border-left-color: var(--military-red);
+}
+
+.search-search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--gray-400);
+}
+
+.search-search-button:disabled:hover {
+  background: transparent;
+  transform: none;
+}
+
+.search-status {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, var(--military-red), var(--red-700));
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--text-light);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--military-gold);
+}
+
+.search-status-text {
+  font-weight: var(--font-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+/* Enhanced military theme styling */
+.search-input-container:hover {
+  border-color: var(--red-600);
+  box-shadow: 0 0 0 1px rgba(211, 47, 47, 0.1), var(--shadow-lg);
+}
+
+.search-input-container:focus-within {
+  border-color: var(--military-red);
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2), var(--shadow-lg);
+}
+
+.search-clear-button {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.search-clear-button:hover {
+  background: var(--military-gold);
+  color: var(--text-dark);
+}
+
+/* Active state enhancements */
+.search-input.search-active .search-status {
+  background: linear-gradient(135deg, var(--military-gold), var(--yellow-600));
+  color: var(--text-dark);
+  border-color: var(--military-red);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .search-input {
+    max-width: 100%;
+  }
+  
+  .search-input-field {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--text-sm);
+  }
+  
+  .search-clear-button,
+  .search-search-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .search-status {
+    font-size: var(--text-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+}

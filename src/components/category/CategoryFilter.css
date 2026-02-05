@@ -1,0 +1,77 @@
+/* CategoryFilter Component Styles */
+.category-filter {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.category-filter .button-group {
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.category-filter .button-group .button {
+  flex: 1;
+  min-width: 120px;
+  max-width: 200px;
+  padding: 0.75rem 1rem;
+  background: #2a2a2a;
+  border: 2px solid #333;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.category-filter .button-group .button:hover {
+  background: #3a3a3a;
+  border-color: #4a90e2;
+  color: #fff;
+}
+
+.category-filter .button-group .button.active {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.3);
+}
+
+.category-filter .button-group .button .icon {
+  margin-right: 0.5rem;
+}
+
+.category-filter .button-group .button img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+/* Active state styling */
+.category-filter.category-active .button-group .button {
+  border-color: #4a90e2;
+}
+
+.category-filter.category-active .button-group .button:hover {
+  background: #357abd;
+  border-color: #357abd;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .category-filter .button-group .button {
+    min-width: 100px;
+    font-size: 13px;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .category-filter .button-group .button .icon {
+    margin-right: 0.25rem;
+  }
+  
+  .category-filter .button-group .button img {
+    width: 16px;
+    height: 16px;
+  }
+}

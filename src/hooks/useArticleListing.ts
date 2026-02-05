@@ -84,14 +84,6 @@ export const useArticleListing = (type: ContentType) => {
     try {
       updateState({ loading: true, error: null })
       
-      // DEBUG: Log current user info
-      console.group('🔍 loadSavedArticles Debug')
-      console.log('Current User UID (Firebase Auth):', user.uid)
-      console.log('Current User Email:', user.email)
-      console.log('Current User Role:', user.role)
-      console.log('Current User Display Name:', user.displayName)
-      console.groupEnd()
-      
       // Convert user to ServiceUser format
       const serviceUser = {
         id: user.uid,
@@ -188,7 +180,21 @@ export const useArticleListing = (type: ContentType) => {
   }, [type, user])
 
   // Permission-based UI state
-  const uiPermissions = PermissionService.getServicePermissions(user || null)
+  const serviceUser = user ? {
+    id: user.uid,
+    username: user.displayName || user.email || 'unknown',
+    role: user.role
+  } : null
+  
+  const uiPermissions = serviceUser 
+    ? PermissionService.getServicePermissions(serviceUser)
+    : {
+        canCreate: false,
+        canUpdate: false,
+        canDelete: false,
+        canPublish: false,
+        isOwner: false
+      }
 
   return {
     // State

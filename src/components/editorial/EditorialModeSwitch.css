@@ -1,77 +1,116 @@
-/* Editorial Mode Switch - Military-themed segmented control */
+/* EditorialModeSwitch Component Styles */
 .editorial-mode-switch {
   display: flex;
-  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
 }
 
-.mode-segments {
+.mode-toggle-group {
+  display: flex;
+  background: var(--gray-100);
+  border: 2px solid var(--military-red);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.mode-button {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid var(--military-gold);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  position: relative;
-  box-shadow: var(--shadow-sm);
-}
-
-.mode-segment {
-  position: relative;
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   background: transparent;
   border: none;
-  color: var(--text-dark);
-  font-family: inherit;
+  color: var(--gray-700);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-transform: uppercase;
-  min-width: 120px;
-  display: flex;
-  align-items: center;
+  position: relative;
+  min-width: 140px;
   justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.mode-segment:hover {
-  background: rgba(255, 215, 0, 0.1);
-  color: var(--military-red);
-}
-
-.mode-segment.active {
-  background: var(--military-gold);
+.mode-button:hover {
+  background: var(--gray-200);
   color: var(--text-dark);
+}
+
+.mode-button.active {
+  background: var(--military-red);
+  color: var(--text-light);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
   font-weight: var(--font-semibold);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.segment-divider {
-  width: 1px;
-  height: 24px;
+.mode-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
   background: var(--military-gold);
-  opacity: 0.3;
 }
 
-/* Military-themed focus states */
-.mode-segment:focus {
-  outline: 2px solid var(--military-red);
-  outline-offset: 2px;
+.mode-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
 }
 
-.mode-segment:active {
-  transform: translateY(1px);
+.published-indicator {
+  background: var(--text-light);
+  border: 2px solid var(--text-light);
 }
 
-/* Responsive adjustments */
+.saved-indicator {
+  background: var(--text-light);
+  border: 2px solid var(--text-light);
+}
+
+.mode-text {
+  font-weight: var(--font-semibold);
+  letter-spacing: 0.5px;
+}
+
+/* Military theme enhancements */
+.mode-toggle-group {
+  border-color: var(--military-red);
+  background: var(--white-95);
+}
+
+.mode-button {
+  border-right: 1px solid var(--gray-300);
+}
+
+.mode-button:last-child {
+  border-right: none;
+}
+
+.mode-button.active {
+  background: var(--military-red);
+  border-color: var(--military-red);
+}
+
+.mode-button.active .mode-indicator {
+  background: var(--military-gold);
+  border-color: var(--military-gold);
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
-  .mode-segment {
-    padding: var(--spacing-xs) var(--spacing-sm);
+  .mode-button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    min-width: 120px;
     font-size: var(--text-xs);
-    min-width: 100px;
   }
   
-  .segment-divider {
-    height: 20px;
+  .mode-text {
+    font-weight: var(--font-medium);
   }
 }
