@@ -3,13 +3,15 @@ import { useAuth } from '../contexts/AuthContext'
 import { 
   createArticle, 
   updateArticle,
-  type ContentType,
-  type Article 
+  type ContentType
 } from '../services/contentService'
+import type { NewsArticle, KnowledgeArticle } from '../types/firestore'
 import { PermissionService } from '../services/permissionService'
 
+export type Article = NewsArticle | KnowledgeArticle
+
 export type EditorMode = 'create' | 'update'
-export type SaveStatus = 'draft' | 'saved' | 'published' | 'error'
+export type SaveStatus = 'draft' | 'saved' | 'published' | 'error' | 'saving' | 'publishing'
 
 export interface EditorState {
   title: string
@@ -72,7 +74,7 @@ export const useArticleEditor = (
         tags: existingArticle.tags || [],
         featured: existingArticle.featured || false,
         category: existingArticle.category || (type === 'news' ? 'general' : 'quan-su'),
-        status: existingArticle.status || 'saved',
+        status: (existingArticle.status as 'saved' | 'published') || 'saved',
         loading: false,
         error: null,
         saveStatus: 'draft',
@@ -196,15 +198,15 @@ export const useArticleEditor = (
 
       let result: Article
       if (mode === 'create') {
-        result = await createArticle(type, articleData, serviceUser)
+        result = await createArticle(type, articleData, serviceUser.id)
       } else {
-        result = await updateArticle(type, existingArticle!.id!, articleData, serviceUser)
+        result = await updateArticle(type, existingArticle!.id!, articleData, serviceUser.id, serviceUser.role)
       }
 
       // Update state with result
-      const newOriginalState = {
+      const newOriginalState: EditorState = {
         ...state,
-        status: 'saved',
+        status: 'saved' as const,
         saveStatus: 'saved',
         hasUnsavedChanges: false
       }
@@ -254,8 +256,21 @@ export const useArticleEditor = (
     const publishPermission = PermissionService.validatePublish(serviceUser, existingArticle || {
       ...state,
       id: 'temp',
+      slug: 'temp',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      updatedBy: user.uid,
       createdBy: user.uid,
-      author: { uid: user.uid, displayName: user.displayName }
+      author: { uid: user.uid, displayName: user.displayName || '' },
+      // KnowledgeArticle required properties with defaults
+      estimatedTime: 0,
+      engagement: { views: 0, likes: 0, shares: 0, bookmarks: 0 },
+      type: 'article' as const,
+      subcategory: '',
+      media: { images: [], videos: [], documents: [] },
+      prerequisites: [],
+      relatedKnowledge: [],
+      review: { isReviewed: false }
     } as Article)
     
     if (!publishPermission.allowed) {
@@ -301,15 +316,15 @@ export const useArticleEditor = (
 
       let result: Article
       if (mode === 'create') {
-        result = await createArticle(type, articleData, serviceUser)
+        result = await createArticle(type, articleData, serviceUser.id)
       } else {
-        result = await updateArticle(type, existingArticle!.id!, articleData, serviceUser)
+        result = await updateArticle(type, existingArticle!.id!, articleData, serviceUser.id, serviceUser.role)
       }
 
       // Update state with result
-      const newOriginalState = {
+      const newOriginalState: EditorState = {
         ...state,
-        status: 'published',
+        status: 'published' as const,
         saveStatus: 'published',
         hasUnsavedChanges: false
       }

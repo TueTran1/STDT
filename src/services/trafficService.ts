@@ -7,12 +7,7 @@ import {
   where, 
   orderBy, 
   limit, 
-  startAfter,
   Timestamp,
-  serverTimestamp,
-  getCountFromServer,
-  writeBatch,
-  runTransaction
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { 
@@ -101,7 +96,7 @@ class TrafficServiceClass {
         },
         content: contentPerformance,
         geographic: geographicData,
-        lastUpdated: serverTimestamp(),
+        lastUpdated: Timestamp.now(),
         dataFreshness: {
           traffic: this.calculateDataFreshness('traffic'),
           users: this.calculateDataFreshness('users'),
@@ -234,7 +229,7 @@ class TrafficServiceClass {
 
       const totalReferrers = Object.values(referrerCounts).reduce((sum, count) => sum + count, 0)
 
-      const topReferrers = Object.entries(referrerCounts)
+      const topReferrers = (Object.entries(referrerCounts) as [string, number][])
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
         .map(([domain, count]) => ({
@@ -337,8 +332,6 @@ class TrafficServiceClass {
       const totalTimeOnSite = users.reduce((sum, user) => sum + user.totalTimeOnSite, 0)
       const avgSessionsPerUser = totalUsers > 0 ? totalSessions / totalUsers : 0
       const avgTimeOnSite = totalUsers > 0 ? totalTimeOnSite / totalUsers : 0
-      const avgSessionDuration = users.reduce((sum, user) => sum + user.avgSessionDuration, 0) / users.length
-      const bounceRate = users.reduce((sum, user) => sum + user.bounceRate, 0) / users.length
       const retentionRate = totalUsers > 0 ? (returningUsers / totalUsers) * 100 : 0
 
       return {
@@ -383,14 +376,25 @@ class TrafficServiceClass {
       }, {} as Record<DeviceType, number>)
 
       const totalUsers = users.length
-      const byDevice = Object.entries(deviceCounts).reduce((acc, [device, count]) => ({
-        ...acc,
-        [device]: {
-          count,
-          percentage: (count / totalUsers) * 100,
-          trend: 'stable', // Would calculate from historical data
+      const byDevice: Record<DeviceType, {
+        count: number
+        percentage: number
+        trend: 'up' | 'down' | 'stable'
+      }> = {
+        mobile: { count: 0, percentage: 0, trend: 'stable' },
+        tablet: { count: 0, percentage: 0, trend: 'stable' },
+        desktop: { count: 0, percentage: 0, trend: 'stable' }
+      }
+      
+      Object.entries(deviceCounts).forEach(([device, count]) => {
+        const deviceType = device as DeviceType
+        const countNum = count as number
+        byDevice[deviceType] = {
+          count: countNum,
+          percentage: (countNum / totalUsers) * 100,
+          trend: 'stable'
         }
-      }), {} as Record<DeviceType, any>)
+      })
 
       // Aggregate by browser
       const browserCounts = users.reduce((acc, user) => {
@@ -401,7 +405,7 @@ class TrafficServiceClass {
         return acc
       }, {} as Record<string, number>)
 
-      const byBrowser = Object.entries(browserCounts)
+      const byBrowser = (Object.entries(browserCounts) as [string, number][])
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
         .map(([browserVersion, count]) => {
@@ -423,7 +427,7 @@ class TrafficServiceClass {
         return acc
       }, {} as Record<string, number>)
 
-      const byOS = Object.entries(osCounts)
+      const byOS = (Object.entries(osCounts) as [string, number][])
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
         .map(([osVersion, count]) => {
@@ -473,9 +477,9 @@ class TrafficServiceClass {
         return acc
       }, {} as Record<string, number>)
 
-      const totalViews = Object.values(countryCounts).reduce((sum, count) => sum + count, 0)
+      const totalViews = (Object.values(countryCounts) as number[]).reduce((sum: number, count: number) => sum + count, 0)
 
-      const byCountry = Object.entries(countryCounts)
+      const byCountry = (Object.entries(countryCounts) as [string, number][])
         .sort(([, a], [, b]) => b - a)
         .slice(0, 20)
         .map(([country, count]) => ({
@@ -483,7 +487,7 @@ class TrafficServiceClass {
           code: this.getCountryCode(country),
           count,
           percentage: (count / totalViews) * 100,
-          trend: 'stable' // Would calculate from historical data
+          trend: 'stable' as const
         }))
 
       // Aggregate by region
@@ -495,7 +499,7 @@ class TrafficServiceClass {
         return acc
       }, {} as Record<string, number>)
 
-      const byRegion = Object.entries(regionCounts)
+      const byRegion = (Object.entries(regionCounts) as [string, number][])
         .sort(([, a], [, b]) => b - a)
         .slice(0, 20)
         .map(([key, count]) => {
@@ -517,7 +521,7 @@ class TrafficServiceClass {
         return acc
       }, {} as Record<string, number>)
 
-      const topCities = Object.entries(cityCounts)
+      const topCities = (Object.entries(cityCounts) as [string, number][])
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10)
         .map(([key, count]) => {
@@ -718,7 +722,7 @@ class TrafficServiceClass {
     return (now - lastVisitTime) < timeRangeMs
   }
 
-  private calculateDataFreshness(dataType: string): number {
+  private calculateDataFreshness(_dataType: string): number {
     // Would implement actual freshness calculation based on last update time
     return 5 // Default 5 minutes ago
   }
@@ -852,7 +856,14 @@ class TrafficServiceClass {
 
   private getDefaultTrafficSources(): TrafficSources {
     return {
-      bySource: {},
+      bySource: {
+        organic: { count: 0, percentage: 0, trend: 'stable', growthRate: 0 },
+        direct: { count: 0, percentage: 0, trend: 'stable', growthRate: 0 },
+        referral: { count: 0, percentage: 0, trend: 'stable', growthRate: 0 },
+        social: { count: 0, percentage: 0, trend: 'stable', growthRate: 0 },
+        email: { count: 0, percentage: 0, trend: 'stable', growthRate: 0 },
+        paid: { count: 0, percentage: 0, trend: 'stable', growthRate: 0 }
+      },
       topReferrers: [],
       campaigns: []
     }
