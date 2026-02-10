@@ -19,11 +19,3 @@ export { ArticleMeta, type ArticleMetaProps } from './ArticleMeta'
 export { ArticleTags, type ArticleTagsProps } from './ArticleTags'
 export { ArticleAttachments, type ArticleAttachmentsProps, type Attachment } from './ArticleAttachments'
 export { ArticleFooter, type ArticleFooterProps } from './ArticleFooter'
-
-// Article Detail Page Components
-export { ArticleTopBar, type ArticleTopBarProps } from './ArticleTopBar'
-export { ArticleDetailHeader, type ArticleDetailHeaderProps } from './ArticleDetailHeader'
-export { ArticleContent, type ArticleContentProps } from './ArticleContent'
-export { ArticleDetailTags, type ArticleDetailTagsProps } from './ArticleDetailTags'
-export { ArticleFooterMeta, type ArticleFooterMetaProps } from './ArticleFooterMeta'
-export { ArticleLoadingState, type ArticleLoadingStateProps } from './ArticleLoadingState'

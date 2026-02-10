@@ -6,7 +6,7 @@ import {
   ErrorState,
   BackButton
 } from '../components/ui'
-import { Newspaper, Landmark, BookOpen, User, Calendar, Eye, Clock, FileText } from 'lucide-react'
+import { Newspaper, BookOpen, User, Calendar, Eye, Clock, FileText } from 'lucide-react'
 
 export const ArticlePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>()
@@ -25,7 +25,7 @@ export const ArticlePage: React.FC = () => {
                 newsData?.find(item => item.slug === slug)
   // Determine article type based on where we found it
   const articleType = knowledgeData?.find(item => item.slug === slug) ? 'knowledge' : 
-                   newsData?.find(item => item.slug === slug) ? 'news' : 'traditions'
+                   newsData?.find(item => item.slug === slug) ? 'news' : 'knowledge'
 
   // Handle refresh for error state
   const handleRefresh = () => {
@@ -40,10 +40,8 @@ export const ArticlePage: React.FC = () => {
         return '/news'
       } else if (location.pathname.includes('/knowledge/')) {
         return '/knowledge'
-      } else if (location.pathname.includes('/traditions/')) {
-        return '/traditions'
       }
-      return '/'
+      return '/knowledge'
     }
     
     // For successful loads, use the determined article type
@@ -52,10 +50,8 @@ export const ArticlePage: React.FC = () => {
         return '/knowledge'
       case 'news':
         return '/news'
-      case 'traditions':
-        return '/traditions'
       default:
-        return '/'
+        return '/knowledge'
     }
   }
 
@@ -63,7 +59,6 @@ export const ArticlePage: React.FC = () => {
   const getTypeIcon = (contentType: string) => {
     switch (contentType) {
       case 'news': return <Newspaper size={24} />
-      case 'traditions': return <Landmark size={24} />
       case 'knowledge': return <BookOpen size={24} />
       default: return <FileText size={24} />
     }
@@ -72,7 +67,6 @@ export const ArticlePage: React.FC = () => {
   const getTypeLabel = (contentType: string) => {
     switch (contentType) {
       case 'news': return 'TIN TỨC'
-      case 'traditions': return 'TRUYỀN THỐNG'
       case 'knowledge': return 'KIẾN THỨC'
       default: 'BÀI VIẾT'
     }

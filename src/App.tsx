@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { AdminRoute } from './components/AdminRoute'
+import { AdminAuthProvider } from './contexts/AdminAuthContext'
+import { AdminRoute } from './components/admin/AdminRoute'
+import { AdminLayout } from './components/admin/AdminLayout'
 import { EditorRoute } from './components/EditorRoute'
 import { ProfileRoute } from './components/ProfileRoute'
 import { ScrollToTop } from './components/ScrollToTop'
@@ -11,78 +13,123 @@ import { NewsPage } from './pages/NewsPage'
 import { KnowledgePage } from './pages/KnowledgePage'
 import { RegulationsPage } from './pages/RegulationsPage'
 import { ProfilePage } from './pages/ProfilePage'
-import AdminDashboard from './pages/AdminDashboard'
+import AdminDashboard from './pages/admin/AdminDashboard'
+import { AccessDeniedPage } from './pages/AccessDeniedPage'
 import { ArticlePage } from './pages/ArticlePage'
 import { ArticleEditorPage } from './pages/ArticleEditorPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { AdminPermission } from './types/admin'
+import { UserManagementSection } from './components/admin/UserManagementSection'
+import { ArticleManagementSection } from './components/admin/ArticleManagementSection'
+import { AuditLogSection } from './components/admin/AuditLogSection'
+import { SystemOverviewSection } from './components/admin/SystemOverviewSection'
 
 function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="App">
-          <div className="bronze-drum-pattern"></div>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<HomeScreen />} />
-            <Route path="/traditions" element={<TraditionsPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/knowledge" element={<KnowledgePage />} />
-            <Route path="/regulations" element={<RegulationsPage />} />
-            {/* <Route path="/notifications" element={<NotificationsPage />} /> */}
-            
-            {/* Authentication Required Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/profile" element={
-              <ProfileRoute>
-                <ProfilePage />
-              </ProfileRoute>
-            } />
-            
-            {/* Editor Only Routes - MUST come before public slug routes */}
-            <Route path="/news/create" element={
-              <EditorRoute>
-                <ArticleEditorPage />
-              </EditorRoute>
-            } />
-            <Route path="/news/edit/:id" element={
-              <EditorRoute>
-                <ArticleEditorPage />
-              </EditorRoute>
-            } />
-            <Route path="/knowledge/create" element={
-              <EditorRoute>
-                <ArticleEditorPage />
-              </EditorRoute>
-            } />
-            <Route path="/knowledge/edit/:id" element={
-              <EditorRoute>
-                <ArticleEditorPage />
-              </EditorRoute>
-            } />
-            
-            {/* Public Article Routes - MUST come after edit routes */}
-            <Route path="/:type/:slug" element={<ArticlePage />} />
-            <Route path="/traditions/:slug" element={<ArticlePage />} />
-            <Route path="/news/:slug" element={<ArticlePage />} />
-            <Route path="/knowledge/:slug" element={<ArticlePage />} />
-            <Route path="/regulations/:slug" element={<ArticlePage />} />
-            
-            {/* Admin Only Routes */}
-            <Route path="/admin" element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            } />
-            
-            
-            {/* 404 Fallback Route */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </div>
-      </Router>
+      <AdminAuthProvider>
+        <Router>
+          <ScrollToTop />
+          <div className="App">
+            <div className="bronze-drum-pattern"></div>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<HomeScreen />} />
+              <Route path="/traditions" element={<TraditionsPage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/knowledge" element={<KnowledgePage />} />
+              <Route path="/regulations" element={<RegulationsPage />} />
+              {/* <Route path="/notifications" element={<NotificationsPage />} /> */}
+              
+              {/* Authentication Required Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/profile" element={
+                <ProfileRoute>
+                  <ProfilePage />
+                </ProfileRoute>
+              } />
+              
+              {/* Editor Only Routes - MUST come before public slug routes */}
+              <Route path="/news/create" element={
+                <EditorRoute>
+                  <ArticleEditorPage />
+                </EditorRoute>
+              } />
+              <Route path="/news/edit/:id" element={
+                <EditorRoute>
+                  <ArticleEditorPage />
+                </EditorRoute>
+              } />
+              <Route path="/knowledge/create" element={
+                <EditorRoute>
+                  <ArticleEditorPage />
+                </EditorRoute>
+              } />
+              <Route path="/knowledge/edit/:id" element={
+                <EditorRoute>
+                  <ArticleEditorPage />
+                </EditorRoute>
+              } />
+              
+              {/* Public Article Routes - MUST come after edit routes */}
+              <Route path="/:type/:slug" element={<ArticlePage />} />
+              <Route path="/traditions/:slug" element={<ArticlePage />} />
+              <Route path="/news/:slug" element={<ArticlePage />} />
+              <Route path="/knowledge/:slug" element={<ArticlePage />} />
+              <Route path="/regulations/:slug" element={<ArticlePage />} />
+              
+              {/* Admin Only Routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
+                </AdminRoute>
+              } />
+              
+              {/* Admin Sub-routes */}
+              <Route path="/admin/users" element={
+                <AdminRoute>
+                  <AdminLayout>
+                    <UserManagementSection />
+                  </AdminLayout>
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/articles" element={
+                <AdminRoute requiredPermissions={[AdminPermission.VIEW_ARTICLES]}>
+                  <AdminLayout>
+                    <ArticleManagementSection />
+                  </AdminLayout>
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/audit" element={
+                <AdminRoute requiredPermissions={[AdminPermission.VIEW_AUDIT_LOG]}>
+                  <AdminLayout>
+                    <AuditLogSection />
+                  </AdminLayout>
+                </AdminRoute>
+              } />
+              
+              <Route path="/admin/settings" element={
+                <AdminRoute requiredPermissions={[AdminPermission.MANAGE_SYSTEM]}>
+                  <AdminLayout>
+                    <SystemOverviewSection />
+                  </AdminLayout>
+                </AdminRoute>
+              } />
+              
+              {/* Access Denied Page */}
+              <Route path="/admin/access-denied" element={<AccessDeniedPage />} />
+              
+              {/* 404 Fallback Route */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </div>
+        </Router>
+      </AdminAuthProvider>
     </AuthProvider>
   )
 }

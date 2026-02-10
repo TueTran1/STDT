@@ -8,6 +8,9 @@
 /* Import search highlighting styles */
 @import './utils/highlightText.css';
 
+/* Import admin layout styles */
+@import './styles/admin-layout.css';
+
 /* ========================================
    LEGACY COMPONENT STYLES (to be migrated)
    ======================================== */

