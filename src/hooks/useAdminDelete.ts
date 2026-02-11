@@ -36,7 +36,7 @@ export const useAdminDelete = () => {
       }
 
       // Validate delete permission
-      const permission = PermissionService.validateDelete(serviceUser, article)
+      const permission = PermissionService.validateDelete(serviceUser)
       if (!permission.allowed) {
         setError(permission.reason)
         setIsDeleting(null)
