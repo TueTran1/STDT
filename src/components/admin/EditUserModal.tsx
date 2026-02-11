@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Mail, User, Shield } from 'lucide-react'
+import { X, User, Shield } from 'lucide-react'
 import { AdminUserData } from '../../services/adminService'
 
 interface EditUserModalProps {

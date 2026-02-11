@@ -60,7 +60,7 @@ export type AuditStatus = 'success' | 'failure' | 'pending' | 'cancelled'
 
 export interface AuditLogEntry {
   id: string
-  timestamp: import('firebase/firestore').Timestamp
+  timestamp: import('firebase/firestore').Timestamp | import('firebase/firestore').FieldValue
   level: LogLevel
   status: AuditStatus
   
@@ -149,7 +149,7 @@ export interface SecurityAlert {
   severity: SecurityAlertSeverity
   title: string
   description: string
-  timestamp: import('firebase/firestore').Timestamp
+  timestamp: import('firebase/firestore').Timestamp | import('firebase/firestore').FieldValue
   
   // Detection Information
   detection: {
@@ -215,7 +215,7 @@ export interface SecurityAlert {
 
 export interface ErrorLogEntry {
   id: string
-  timestamp: import('firebase/firestore').Timestamp
+  timestamp: import('firebase/firestore').Timestamp | import('firebase/firestore').FieldValue
   level: LogLevel
   
   // Error Information

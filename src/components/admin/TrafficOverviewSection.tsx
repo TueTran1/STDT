@@ -2,14 +2,10 @@ import React, { useState } from 'react'
 import { 
   Users, 
   TrendingUp, 
-  Globe, 
-  Monitor, 
   RefreshCw,
   Download,
   Calendar,
-  Filter,
   BarChart3,
-  PieChart,
   Activity
 } from 'lucide-react'
 import { HealthCard } from './HealthCard'
@@ -213,7 +209,13 @@ export const TrafficOverviewSection: React.FC = () => {
         {/* Traffic Sources Chart */}
         <AdminSection title="Traffic Sources">
           {data ? (
-            <TrafficSourcesChart data={data.traffic.sources} />
+            <TrafficSourcesChart 
+              data={Object.entries(data.traffic.sources.bySource).map(([source, data]) => ({
+                source: source.charAt(0).toUpperCase() + source.slice(1),
+                visits: data.count,
+                percentage: data.percentage
+              }))} 
+            />
           ) : (
             <AdminLoadingState message="Loading traffic sources..." />
           )}
@@ -222,7 +224,23 @@ export const TrafficOverviewSection: React.FC = () => {
         {/* User Growth Chart */}
         <AdminSection title="User Growth Trend">
           {data ? (
-            <UserGrowthChart data={data.users.growth} timeRange={timeRange} />
+            <UserGrowthChart 
+              data={
+                timeRange === '24h' || timeRange === '1h' 
+                  ? data.users.growth.daily 
+                  : timeRange === '7d' || timeRange === '30d' 
+                    ? data.users.growth.weekly.map(item => ({
+                        date: item.week,
+                        users: item.users,
+                        newUsers: item.newUsers
+                      }))
+                    : data.users.growth.monthly.map(item => ({
+                        date: item.month,
+                        users: item.users,
+                        newUsers: item.newUsers
+                      }))
+              } 
+            />
           ) : (
             <AdminLoadingState message="Loading user growth..." />
           )}
@@ -232,7 +250,11 @@ export const TrafficOverviewSection: React.FC = () => {
       {/* Geographic Distribution */}
       <AdminSection title="Geographic Distribution">
         {data ? (
-          <GeographicChart data={data.traffic.sources} />
+          <GeographicChart data={data.geographic.byCountry.map(item => ({
+            country: item.country,
+            visits: item.count,
+            percentage: item.percentage
+          }))} />
         ) : (
           <AdminLoadingState message="Loading geographic data..." />
         )}
@@ -241,7 +263,18 @@ export const TrafficOverviewSection: React.FC = () => {
       {/* Top Pages */}
       <AdminSection title="Top Pages">
         {data ? (
-          <TopPagesTable pages={[]} />
+          <TopPagesTable 
+            data={data.traffic?.topPages?.byPageViews?.map(page => ({
+              path: page.url || '',
+              title: page.title || page.url || '',
+              pageViews: page.pageViews || 0,
+              uniqueViews: page.uniqueViews || 0,
+              avgTimeOnPage: page.avgTimeOnPage || 0,
+              bounceRate: page.bounceRate || 0,
+              growthRate: page.growthRate || 0
+            })) || []} 
+            timeRange={timeRange}
+          />
         ) : (
           <AdminLoadingState message="Loading top pages..." />
         )}

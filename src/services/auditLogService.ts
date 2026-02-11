@@ -472,7 +472,7 @@ class AuditLogServiceClass {
         limit: 1000
       })
 
-      const searchResults = allAlerts.filter(alert => 
+      const searchResults = allAlerts.alerts.filter(alert => 
         this.matchesSearchQuery(alert, query)
       )
 
@@ -497,7 +497,7 @@ class AuditLogServiceClass {
         limit: 1000
       })
 
-      const searchResults = allErrors.filter(error => 
+      const searchResults = allErrors.errors.filter(error => 
         this.matchesSearchQuery(error, query)
       )
 
@@ -634,6 +634,10 @@ class AuditLogServiceClass {
   // PRIVATE HELPER METHODS
   // ============================================================================
 
+  private isTimestamp(value: any): value is Timestamp {
+    return value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function'
+  }
+
   private startFlushTimer(): void {
     if (this.flushTimer) {
       clearInterval(this.flushTimer)
@@ -654,11 +658,11 @@ class AuditLogServiceClass {
     try {
       currentBuffer.forEach(logItem => {
         if (logItem.type === 'audit') {
-          batch.add(doc(collection(db, logItem.collection), logItem.data))
+          batch.set(doc(collection(db, logItem.collection)), logItem.data)
         } else if (logItem.type === 'error') {
-          batch.add(doc(collection(db, logItem.collection), logItem.data))
+          batch.set(doc(collection(db, logItem.collection)), logItem.data)
         } else if (logItem.type === 'security') {
-          batch.add(doc(collection(db, logItem.collection), logItem.data))
+          batch.set(doc(collection(db, logItem.collection)), logItem.data)
         }
       })
       
@@ -723,7 +727,7 @@ class AuditLogServiceClass {
     const topActions = Object.entries(actionCounts)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
-      .map(([action, count]) => ({ action, count }))
+      .map(([action, count]) => ({ action: action as AuditAction, count }))
     
     const actorCounts = entries.reduce((acc, entry) => {
       const key = `${entry.actor.userId}-${entry.actor.userEmail}`
@@ -746,8 +750,8 @@ class AuditLogServiceClass {
       topActions,
       topActors,
       timeRange: {
-        start: entries.length > 0 ? entries[0].timestamp.toDate().toISOString() : '',
-        end: entries.length > 0 ? entries[entries.length - 1].timestamp.toDate().toISOString() : ''
+        start: entries.length > 0 && this.isTimestamp(entries[0].timestamp) ? (entries[0].timestamp as Timestamp).toDate().toISOString() : '',
+        end: entries.length > 0 && this.isTimestamp(entries[entries.length - 1].timestamp) ? (entries[entries.length - 1].timestamp as Timestamp).toDate().toISOString() : ''
       }
     }
   }
@@ -769,7 +773,7 @@ class AuditLogServiceClass {
     const topTypes = Object.entries(typeCounts)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
-      .map(([type, count]) => ({ type, count }))
+      .map(([type, count]) => ({ type: type as SecurityAlertType, count }))
     
     const sourceCounts = alerts.reduce((acc, alert) => {
       acc[alert.detection.source] = (acc[alert.detection.source] || 0) + 1
@@ -792,8 +796,8 @@ class AuditLogServiceClass {
       topTypes,
       topSources,
       timeRange: {
-        start: alerts.length > 0 ? alerts[0].timestamp.toDate().toISOString() : '',
-        end: alerts.length > 0 ? alerts[alerts.length - 1].timestamp.toDate().toISOString() : ''
+        start: alerts.length > 0 && this.isTimestamp(alerts[0].timestamp) ? (alerts[0].timestamp as Timestamp).toDate().toISOString() : '',
+        end: alerts.length > 0 && this.isTimestamp(alerts[alerts.length - 1].timestamp) ? (alerts[alerts.length - 1].timestamp as Timestamp).toDate().toISOString() : ''
       }
     }
   }
@@ -837,8 +841,8 @@ class AuditLogServiceClass {
       topErrorTypes,
       topEndpoints,
       timeRange: {
-        start: errors.length > 0 ? errors[0].timestamp.toDate().toISOString() : '',
-        end: errors.length > 0 ? errors[errors.length - 1].timestamp.toDate().toISOString() : ''
+        start: errors.length > 0 && this.isTimestamp(errors[0].timestamp) ? (errors[0].timestamp as Timestamp).toDate().toISOString() : '',
+        end: errors.length > 0 && this.isTimestamp(errors[errors.length - 1].timestamp) ? (errors[errors.length - 1].timestamp as Timestamp).toDate().toISOString() : ''
       }
     }
   }
@@ -948,8 +952,8 @@ class AuditLogServiceClass {
     )
 
     const batch = writeBatch(db)
-    querySnapshot.docs.forEach(doc => {
-      const data = doc.data()
+    querySnapshot.docs.forEach(documentSnapshot => {
+      const data = documentSnapshot.data()
       batch.set(doc(collection(db, targetCollection)), {
         ...data,
         compliance: {
@@ -958,7 +962,7 @@ class AuditLogServiceClass {
           archivedAt: serverTimestamp()
         }
       });
-      batch.delete(doc.ref);
+      batch.delete(documentSnapshot.ref);
     })
 
     await batch.commit()

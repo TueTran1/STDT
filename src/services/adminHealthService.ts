@@ -52,7 +52,7 @@ class AdminHealthServiceClass {
         this.getSecurityMetrics(options)
       ])
 
-      const lastUpdated = serverTimestamp()
+      const lastUpdated = Timestamp.now()
 
       return {
         siteStatus,

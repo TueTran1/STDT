@@ -240,3 +240,47 @@ export interface AdminActionSummary {
   count: number
   lastPerformed: import('firebase/firestore').Timestamp
 }
+
+// ============================================================================
+// USER MANAGEMENT TYPES
+// ============================================================================
+
+export type UserRole = 'admin' | 'editor'
+
+export interface UserFilters {
+  role?: UserRole
+  status?: boolean
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+  limit?: number
+  offset?: any
+}
+
+export interface UserList {
+  users: AdminUserData[]
+  totalCount: number
+  hasMore: boolean
+  cursor?: any
+}
+
+export interface CreateUserRequest {
+  email: string
+  displayName: string
+  role: UserRole
+}
+
+export interface UpdateUserRequest {
+  displayName?: string
+  role?: UserRole
+  isActive?: boolean
+}
+
+export interface UserRoleChangeRequest {
+  role: UserRole
+  reason?: string
+}
+
+export interface PasswordResetRequest {
+  userId: string
+  reason?: string
+}

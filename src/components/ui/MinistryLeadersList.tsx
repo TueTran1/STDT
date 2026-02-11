@@ -276,7 +276,10 @@ export function createGenericLeaderList<T extends LeaderProfile>() {
               
               <div className="leader-info">
                 <div className="leader-title">{leader.currentTitles[0]}</div>
-                <div className="leader-name">{leader.rank && <span>{leader.rank} </span>}{leader.name}</div>
+                <div className="leader-name">
+                  {('rank' in leader && (leader as any).rank) ? <span>{(leader as any).rank} </span> : null}
+                  {leader.name}
+                </div>
               </div>
             </div>
           ))}

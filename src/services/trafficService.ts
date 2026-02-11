@@ -121,9 +121,6 @@ class TrafficServiceClass {
    */
   async getTrafficMetrics(options: AnalyticsQueryOptions = { timeRange: '24h' }): Promise<TrafficMetrics> {
     try {
-      const timeRangeMs = this.getTimeRangeMs(options.timeRange)
-      const startDate = Timestamp.fromDate(new Date(Date.now() - timeRangeMs))
-
       // Get aggregated traffic metrics
       const metricsDoc = await getDoc(doc(db, this.collections.aggregated, 'traffic_metrics'))
       
@@ -135,7 +132,7 @@ class TrafficServiceClass {
       
       // Get real-time data for recent time ranges
       if (options.timeRange === '1h' || options.timeRange === '24h') {
-        const realTimeMetrics = await this.getRealTimeTrafficMetrics(startDate)
+        const realTimeMetrics = await this.getRealTimeTrafficMetrics()
         return this.mergeTrafficMetrics(data, realTimeMetrics)
       }
 
@@ -610,6 +607,7 @@ class TrafficServiceClass {
           bounceRate: item.bounceRate,
           shares: item.shares || 0,
           comments: item.comments || 0,
+          likes: item.likes || 0,
           publishedAt: item.publishedAt
         }))
 
@@ -810,7 +808,7 @@ class TrafficServiceClass {
   // REAL-TIME DATA
   // ============================================================================
 
-  private async getRealTimeTrafficMetrics(startDate: Timestamp): Promise<Partial<TrafficMetrics>> {
+  private async getRealTimeTrafficMetrics(): Promise<Partial<TrafficMetrics>> {
     // This would query real-time page view data
     // For now, return empty object
     return {}

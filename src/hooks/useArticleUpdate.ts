@@ -142,7 +142,7 @@ export const useArticleUpdate = (type: ContentType) => {
       }
 
       // Update the article
-      await updateArticle(type, existingArticle.id!, data, serviceUser)
+      await updateArticle(type, existingArticle.id!, data, serviceUser.id, serviceUser.role)
       
       // Update local state
       setExistingArticle(prev => prev ? { ...prev, ...data, status } : null)

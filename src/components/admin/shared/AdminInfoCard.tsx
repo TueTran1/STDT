@@ -59,20 +59,19 @@ export const AdminMetricCard: React.FC<AdminMetricCardProps> = ({
   return (
     <InfoCard
       title={title}
-      description={
-        <div className="admin-metric-content">
-          <div className="admin-metric-value">
-            {value}
-          </div>
-          {change && (
-            <div className={`admin-metric-change ${getChangeColor()}`}>
-              {getChangeIcon()} {Math.abs(change.value)}%
-            </div>
-          )}
-        </div>
-      }
       icon={icon}
       className={`admin-metric-card ${className}`}
-    />
+    >
+      <div className="admin-metric-content">
+        <div className="admin-metric-value">
+          {value}
+        </div>
+        {change && (
+          <div className={`admin-metric-change ${getChangeColor()}`}>
+            {getChangeIcon()} {Math.abs(change.value)}%
+          </div>
+        )}
+      </div>
+    </InfoCard>
   )
 }

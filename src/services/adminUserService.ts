@@ -8,12 +8,9 @@ import {
   orderBy, 
   limit, 
   startAfter,
-  Timestamp,
   serverTimestamp,
   updateDoc,
-  deleteDoc,
   runTransaction,
-  writeBatch,
   addDoc
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
@@ -22,14 +19,12 @@ import {
 } from '../contexts/AdminAuthContext'
 import { 
   AdminUserData,
-  AdminUser,
   AdminServiceUser,
   UserFilters,
   UserList,
   CreateUserRequest,
   UpdateUserRequest,
-  UserRoleChangeRequest,
-  PasswordResetRequest
+  UserRole,
 } from '../types/admin'
 
 // Error class for admin service operations
@@ -474,7 +469,6 @@ class AdminUserServiceClass {
       }
 
       return {
-        uid: userId,
         ...userSnap.data() as AdminUserData
       }
     } catch (error) {
@@ -489,17 +483,17 @@ class AdminUserServiceClass {
   /**
    * Search users
    */
-  async searchUsers(adminUser: AdminServiceUser, query: string, filters: UserFilters = {}): Promise<UserList> {
+  async searchUsers(adminUser: AdminServiceUser, searchQuery: string, filters: UserFilters = {}): Promise<UserList> {
     try {
       this.validatePermission(adminUser, AdminPermission.VIEW_USERS)
 
       const constraints: any[] = []
 
       // Add search filter
-      if (query) {
+      if (searchQuery) {
         constraints.push(
-          where('displayName', '>=', query.toLowerCase()),
-          where('email', '>=', query.toLowerCase())
+          where('displayName', '>=', searchQuery.toLowerCase()),
+          where('email', '>=', searchQuery.toLowerCase())
         )
       }
 
@@ -544,7 +538,7 @@ class AdminUserServiceClass {
       throw new AdminServiceError(
         'Failed to search users',
         'USER_SEARCH_ERROR',
-        { originalError: error, query, filters }
+        { originalError: error, query: searchQuery, filters }
       )
     }
   }

@@ -14,7 +14,7 @@ export const useAdminDelete = () => {
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const deleteArticle = useCallback(async (
+  const handleDeleteArticle = useCallback(async (
     article: Article,
     type: ContentType,
     onSuccess?: () => void
@@ -61,7 +61,7 @@ export const useAdminDelete = () => {
   }, [])
 
   return {
-    deleteArticle,
+    deleteArticle: handleDeleteArticle,
     isDeleting,
     error,
     clearError,

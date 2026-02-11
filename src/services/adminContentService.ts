@@ -141,7 +141,7 @@ class AdminContentServiceClass {
         articles: filteredArticles,
         totalCount,
         hasMore: options.limit ? totalCount > options.limit : false,
-        cursor: options.offset,
+        cursor: options.offset?.toString(),
         filters: {
           applied: options,
           available: await this.getAvailableFilters()
@@ -309,7 +309,16 @@ class AdminContentServiceClass {
         
         if (docSnap.exists()) {
           articleRef = ref
-          articleType = collectionName.replace(this.collections, '') as ContentType
+          // Determine content type based on collection name
+          if (collectionName === this.collections.news) {
+            articleType = 'news' as ContentType
+          } else if (collectionName === this.collections.knowledge) {
+            articleType = 'knowledge' as ContentType
+          } else if (collectionName === this.collections.traditions) {
+            articleType = 'traditions' as ContentType
+          } else if (collectionName === this.collections.regulations) {
+            articleType = 'regulations' as ContentType
+          }
           break
         }
       }
@@ -388,7 +397,9 @@ class AdminContentServiceClass {
           
           if (docSnap.exists()) {
             batch.delete(ref)
-            deletedArticles.push({ id, type: collectionName.replace(this.collections, '') as ContentType })
+            // Find the content type by matching the collection name
+            const contentType = Object.entries(this.collections).find(([_, value]) => value === collectionName)?.[0] as ContentType
+            deletedArticles.push({ id, type: contentType })
             
             // Mark analytics as deleted
             const analyticsRef = doc(db, this.collections.analytics, id)
@@ -554,11 +565,11 @@ class AdminContentServiceClass {
   private async getAvailableFilters() {
     // This would fetch available filter options from the database
     return {
-      types: ['news', 'knowledge', 'traditions', 'regulations'],
-      statuses: ['published', 'saved', 'draft', 'under_review'],
-      authors: [], // Would fetch from users collection
-      categories: [], // Would fetch from articles
-      tags: [] // Would fetch from articles
+      types: ['news', 'knowledge', 'traditions', 'regulations'] as ContentType[],
+      statuses: ['published', 'saved', 'draft', 'under_review'] as ContentStatus[],
+      authors: [] as Array<{ uid: string; displayName: string }>, // Would fetch from users collection
+      categories: [] as string[], // Would fetch from articles
+      tags: [] as string[] // Would fetch from articles
     }
   }
 
