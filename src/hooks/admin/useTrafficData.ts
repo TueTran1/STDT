@@ -33,6 +33,7 @@ export const useTrafficData = (options: UseTrafficDataOptions = {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<import('firebase/firestore').Timestamp | null>(null)
+  const [currentOptions, setCurrentOptions] = useState<UseTrafficDataOptions>(options)
 
   // Permission validation
   const validatePermission = useCallback((): boolean => {
@@ -69,7 +70,7 @@ export const useTrafficData = (options: UseTrafficDataOptions = {
     } finally {
       setLoading(false)
     }
-  }, [validatePermission, options.timeRange, options.limit])
+  }, [validatePermission, currentOptions.timeRange, currentOptions.limit])
 
   // Refresh function
   const refresh = useCallback(async (): Promise<void> => {
@@ -78,10 +79,7 @@ export const useTrafficData = (options: UseTrafficDataOptions = {
 
   // Set time range
   const setTimeRange = useCallback((newTimeRange: TimeRange): void => {
-    // Update options and refetch data
-    const newOptions = { ...options, timeRange: newTimeRange }
-    // This would update the hook's options
-    // For now, we'll just refetch with new time range
+    setCurrentOptions(prev => ({ ...prev, timeRange: newTimeRange }))
     fetchTrafficData()
   }, [fetchTrafficData])
 

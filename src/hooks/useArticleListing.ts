@@ -246,13 +246,6 @@ export const useAdminArticleListing = (type: ContentType) => {
       setLoading(true)
       setError(null)
       
-      // Convert user to ServiceUser format
-      const serviceUser = {
-        id: user.uid,
-        username: user.displayName || user.email || 'unknown',
-        role: 'admin' as const
-      }
-      
       // Admin can see all articles (both published and saved)
       const published = await getPublishedArticles(type, {
         orderBy: 'createdAt',

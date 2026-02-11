@@ -103,16 +103,16 @@ class AdminUserServiceClass {
           createdVia: 'admin_panel'
         }
 
-        const userResult = await addDoc(collection(db, this.collections.users), userDoc)
+        transaction.set(userRef, userDoc)
         
         // Log user creation
-        await this.logUserAction(adminUser, 'create_user', 'user', userResult.id, {
+        await this.logUserAction(adminUser, 'create_user', 'user', userRef.id, {
           email: userData.email,
           displayName: userData.displayName,
           role: userData.role
         })
 
-        return userResult.id
+        return userRef.id
       })
 
       return userId
@@ -246,25 +246,13 @@ class AdminUserServiceClass {
       this.validatePermission(adminUser, AdminPermission.DELETE_USERS)
 
       // Prevent self-deletion
-      if (adminUser.uid === userId) {
-        throw new AdminServiceError(
-          'Cannot delete your own account',
-          'SELF_MODIFICATION_FORBIDDEN',
-          { adminId: adminUser.uid, targetUserId: userId }
-        )
-      }
+      this.validateSelfModification(adminUser, userId)
 
       // Get target user
       const targetUser = await this.getUserById(userId)
       
       // Prevent deletion of admin users
-      if (targetUser.role === 'admin') {
-        throw new AdminServiceError(
-          'Cannot delete admin user',
-          'ADMIN_DELETION_FORBIDDEN',
-          { adminId: adminUser.uid, targetUserId: userId, targetRole: 'admin' }
-        )
-      }
+      this.validateAdminDeletion(adminUser, targetUser)
 
       // Handle user's content before deletion
       await this.handleUserContentDeletion(targetUser)
@@ -315,13 +303,7 @@ class AdminUserServiceClass {
       this.validatePermission(adminUser, AdminPermission.UPDATE_USERS)
 
       // Prevent self-role assignment
-      if (adminUser.uid === userId) {
-        throw new AdminServiceError(
-          'Cannot modify your own role',
-          'SELF_MODIFICATION_FORBIDDEN',
-          { adminId: adminUser.uid, targetUserId: userId, newRole: role }
-        )
-      }
+      this.validateSelfModification(adminUser, userId)
 
       // Validate role assignment
       this.validateRoleAssignment(role)
@@ -421,6 +403,9 @@ class AdminUserServiceClass {
     try {
       // Validate admin permissions
       this.validatePermission(adminUser, AdminPermission.UPDATE_USERS)
+
+      // Prevent self-password reset
+      this.validateSelfModification(adminUser, userId)
 
       // Generate temporary password
       const tempPassword = this.generateTemporaryPassword()

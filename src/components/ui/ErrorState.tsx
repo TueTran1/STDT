@@ -42,7 +42,6 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   title = 'LỖI',
   message,
   onRetry,
-  retryText = 'Thử lại',
   icon = <AlertTriangle size={48} />,
   className = '',
   children

@@ -2,7 +2,6 @@ import {
   collection, 
   doc, 
   getDocs, 
-  getDoc, 
   query, 
   where, 
   orderBy, 
@@ -10,10 +9,7 @@ import {
   startAfter,
   Timestamp,
   serverTimestamp,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  writeBatch
+  writeBatch,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { 
@@ -26,13 +22,8 @@ import {
   AuditLogResult,
   SecurityAlertResult,
   ErrorLogResult,
-  AuditLogService,
   AuditAction,
-  ResourceType,
-  LogLevel,
-  AuditStatus,
   SecurityAlertType,
-  SecurityAlertSeverity
 } from '../types/audit'
 
 /**
@@ -50,7 +41,6 @@ class AuditLogServiceClass {
     systemMetrics: 'system_metrics'
   }
 
-  private readonly batchSize = 100
   private readonly flushInterval = 5000 // 5 seconds
   private logBuffer: Array<any> = []
   private flushTimer: NodeJS.Timeout | null = null

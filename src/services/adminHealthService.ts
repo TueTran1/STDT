@@ -20,7 +20,6 @@ import {
   SecurityMetrics,
   MonitoringStatus,
   HealthQueryOptions,
-  HealthAlert
 } from '../types/adminHealth'
 import { AdminServiceError } from './adminService'
 

@@ -10,7 +10,6 @@ import {
   startAfter,
   Timestamp,
   serverTimestamp,
-  deleteDoc,
   writeBatch,
   runTransaction,
   addDoc
@@ -30,7 +29,6 @@ import {
   DeleteImpact,
   ContentType,
   ContentStatus,
-  AdminContentService,
   AdminContentError,
   AdminContentErrorCode
 } from '../types/adminContent'
@@ -473,11 +471,17 @@ class AdminContentServiceClass {
    */
   async getArticlePerformance(id: string): Promise<ArticlePerformance> {
     try {
-      // This would calculate performance metrics from historical data
+      // TODO: Calculate performance metrics from historical data for article: {id}
+      // This would typically include:
+      // - Page views over time for this specific article
+      // - Engagement metrics (likes, comments, shares)
+      // - Performance compared to similar articles
+      // - Growth trends and ranking within category
+      
       // For now, return default performance data
       return this.getDefaultPerformance()
     } catch (error) {
-      console.error('Failed to fetch article performance:', error)
+      console.error('Failed to fetch article performance:', error, id)
       return this.getDefaultPerformance()
     }
   }

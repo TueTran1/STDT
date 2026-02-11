@@ -1,7 +1,6 @@
 import React from 'react'
 import { Save, Plus, Trash2, Eye } from 'lucide-react'
 import { useArticlePermissions } from '../../hooks/useArticlePermissions'
-import { useAuth } from '../../contexts/AuthContext'
 import type { Article, ContentType, ArticleMode } from './ArticleShell'
 
 interface ArticleActionsProps {
@@ -30,14 +29,12 @@ interface ArticleActionsProps {
 export const ArticleActions: React.FC<ArticleActionsProps> = ({
   article,
   mode,
-  type,
   formData,
   onCreate,
   onSave,
   onDelete
 }) => {
-  const { user } = useAuth()
-  const { canCreate, canUpdate, canDelete } = useArticlePermissions(article)
+  const { canCreate, canDelete } = useArticlePermissions(article)
 
   const handleSaveDraft = () => {
     onSave?.('saved')

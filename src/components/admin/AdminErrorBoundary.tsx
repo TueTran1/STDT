@@ -70,7 +70,7 @@ export class AdminErrorBoundary extends Component<AdminErrorBoundaryProps, Admin
       await auditLogService.logError({
         error: {
           name: error.name,
-          message: error.message,
+          message: `${error.message}\n\nComponent Stack:\n${errorInfo.componentStack}`,
           stack: error.stack,
           type: 'system',
           code: 'ADMIN_COMPONENT_ERROR'
@@ -78,7 +78,7 @@ export class AdminErrorBoundary extends Component<AdminErrorBoundaryProps, Admin
         level: 'error' as const,
         context: {
           sessionId: this.generateSessionId(),
-          requestId: this.generateRequestId(),
+          requestId: errorId, // Use errorId as requestId for tracking
           userAgent: navigator.userAgent
         },
         system: {
@@ -102,10 +102,6 @@ export class AdminErrorBoundary extends Component<AdminErrorBoundaryProps, Admin
 
   private generateSessionId(): string {
     return `admin_session_${Date.now()}`
-  }
-
-  private generateRequestId(): string {
-    return `admin_req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
   private generateErrorId(): string {

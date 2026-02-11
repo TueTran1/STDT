@@ -100,13 +100,11 @@ export const useArticleEditor = (
   }
 
   const [state, setState] = useState<EditorState>(getInitialState)
-  const [originalState, setOriginalState] = useState<EditorState>(getInitialState)
 
-  // Update original state when article changes
+  // Update state when article changes
   useEffect(() => {
     const initial = getInitialState()
     setState(initial)
-    setOriginalState(initial)
   }, [existingArticle, mode, type])
 
   // Update state helper
@@ -212,8 +210,7 @@ export const useArticleEditor = (
       }
       
       setState(newOriginalState)
-      setOriginalState(newOriginalState)
-
+      
       // Update URL if creating new article
       if (mode === 'create') {
         const newUrl = `/${type}/edit/${result.id}`
@@ -330,8 +327,7 @@ export const useArticleEditor = (
       }
       
       setState(newOriginalState)
-      setOriginalState(newOriginalState)
-
+      
       // Update URL if creating new article
       if (mode === 'create') {
         const newUrl = `/${type}/edit/${result.id}`

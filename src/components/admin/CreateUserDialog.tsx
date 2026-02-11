@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
-import { createUserClient, type CreateUserRequest, type CreateUserResponse } from '../../services/clientUserService'
+import { createUserClient, type CreateUserRequest } from '../../services/clientUserService'
 import { useAuth } from '../../contexts/AuthContext'
 
 // Define types locally to avoid import issues

@@ -920,30 +920,28 @@ class TrafficServiceClass {
     }
   }
 
-  private async getUserGrowthData(
-    granularity: 'daily' | 'weekly' | 'monthly',
-    options: AnalyticsQueryOptions
-  ): Promise<Array<{ date: string; users: number; newUsers: number }>> {
-    // This would fetch user growth data from aggregated collections
-    // For now, return empty array
-    return []
-  }
-
+  
   private async getDailyUserGrowthData(
-    options: AnalyticsQueryOptions
+    _options: AnalyticsQueryOptions
   ): Promise<Array<{ date: string; users: number; newUsers: number }>> {
+    // TODO: Implement daily user growth data using _options.timeRange
+    // Should query user events and aggregate by date within the specified time range
     return []
   }
 
   private async getWeeklyUserGrowthData(
-    options: AnalyticsQueryOptions
+    _options: AnalyticsQueryOptions
   ): Promise<Array<{ week: string; users: number; newUsers: number }>> {
+    // TODO: Implement weekly user growth data using _options.timeRange
+    // Should query user events and aggregate by week within the specified time range
     return []
   }
 
   private async getMonthlyUserGrowthData(
-    options: AnalyticsQueryOptions
+    _options: AnalyticsQueryOptions
   ): Promise<Array<{ month: string; users: number; newUsers: number }>> {
+    // TODO: Implement monthly user growth data using _options.timeRange
+    // Should query user events and aggregate by month within the specified time range
     return []
   }
 }

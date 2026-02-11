@@ -50,8 +50,8 @@ export const ArticleEditorPage: React.FC = () => {
   const [summary, setSummary] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [featured, setFeatured] = useState(false)
-  const [status, setStatus] = useState<'saved' | 'published'>('saved')
   const [category, setCategory] = useState('')
+  const [slug, setSlug] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -88,10 +88,10 @@ export const ArticleEditorPage: React.FC = () => {
   // Update metadata when content changes
   useEffect(() => {
     if (content) {
-      const readingTime = calculateReadingTime(content)
-      // Update reading time in state (will be saved with article)
+      // Reading time is calculated during save and preview operations
+      // No need to calculate it here since it's not used
       if (contentType === 'news') {
-        // For news articles, reading time is calculated
+        // For news articles, reading time is calculated during save
         // This will be included in the save operation
       }
     }
@@ -170,8 +170,8 @@ export const ArticleEditorPage: React.FC = () => {
           setSummary((existingArticle as any).summary || '')
           setTags(existingArticle.tags || [])
           setFeatured(existingArticle.featured || false)
-          setStatus(existingArticle.status || 'saved')
           setCategory(existingArticle.category || '')
+          setSlug(existingArticle.slug || '')
         } else {
           // Create mode - reset form
           setTitle('')
@@ -180,8 +180,8 @@ export const ArticleEditorPage: React.FC = () => {
           setSummary('')
           setTags([])
           setFeatured(false)
-          setStatus('saved')
           setCategory(contentType === 'news' ? 'general' : 'quan-su')
+          setSlug('')
           setArticle(null)
         }
       } catch (err) {
@@ -200,7 +200,7 @@ export const ArticleEditorPage: React.FC = () => {
     // Auto-generate slug from title for new articles
     if (!isEditMode && newTitle.trim()) {
       const newSlug = generateSlug(newTitle)
-      // Slug will be included in the save operation
+      setSlug(newSlug)
     }
   }
   
@@ -310,12 +310,11 @@ export const ArticleEditorPage: React.FC = () => {
     try {
       setSaving(true)
       setError(null)
-      setStatus(newStatus)
       
       
       const articleData = {
         title: title.trim(),
-        slug: generateSlug(title.trim()),
+        slug: slug || generateSlug(title.trim()),
         content: content.trim(),
         excerpt: excerpt.trim() || '',
         summary: summary.trim() || '',

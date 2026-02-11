@@ -225,7 +225,7 @@ export class PermissionService {
   /**
    * Validate delete operation
    */
-  static validateDelete(user: ServiceUser, article?: Article): PermissionResult {
+  static validateDelete(user: ServiceUser): PermissionResult {
     if (!user) {
       return {
         allowed: false,
@@ -266,9 +266,9 @@ export class PermissionService {
    */
   static getServicePermissions(user: ServiceUser, article?: Article): ServicePermission {
     const create = this.validateCreate(user)
-    const read = this.validateRead(user, article)
+    // const read = this.validateRead(user, article)
     const update = article ? this.validateUpdate(user, article) : { allowed: false }
-    const delete_ = this.validateDelete(user, article)
+    const delete_ = this.validateDelete(user)
     const publish = article ? this.validatePublish(user, article) : { allowed: false }
 
     return {
